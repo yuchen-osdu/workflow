@@ -189,7 +189,7 @@ public final class WorkflowV3IntegrationTests extends TestBase {
 	public void shouldReturnBadRequestWhenGetCompleteDetailsForWorkflow() throws Exception {
     createAndTrackWorkflow();
 
-		String url = CREATE_WORKFLOW_URL + "/_" + CREATE_WORKFLOW_WORKFLOW_NAME;
+		String url = CREATE_WORKFLOW_URL + "/_" + getLastCreatedWorkflowName();
 		ClientResponse response = client.send(HttpMethod.GET, url, null, headers, client.getAccessToken());
 		assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatus());
 	}
@@ -201,9 +201,10 @@ public final class WorkflowV3IntegrationTests extends TestBase {
 	@Test
 	public void getWorkflowById_should_return200_when_givenValidWorkflowId() throws Exception {
     createAndTrackWorkflow();
+    String actualWorkflowName = createdWorkflowsWorkflowNames.get(createdWorkflowsWorkflowNames.size() - 1);
 
 		ClientResponse response = client.send(HttpMethod.GET,
-				String.format(GET_WORKFLOW_URL, CREATE_WORKFLOW_WORKFLOW_NAME), null, headers, client.getAccessToken());
+				String.format(GET_WORKFLOW_URL, actualWorkflowName), null, headers, client.getAccessToken());
 
 		assertEquals(HttpStatus.SC_OK, response.getStatus(), response.toString());
 		String responseBody = response.getEntity(String.class);
@@ -222,7 +223,7 @@ public final class WorkflowV3IntegrationTests extends TestBase {
 	public void getWorkflowById_should_returnUnauthorized_when_notGivenAccessToken() throws Exception {
     createAndTrackWorkflow();
     ClientResponse response = client.send(HttpMethod.GET,
-				String.format(GET_WORKFLOW_URL, CREATE_WORKFLOW_WORKFLOW_NAME), null, headers, null);
+				String.format(GET_WORKFLOW_URL, getLastCreatedWorkflowName()), null, headers, null);
 		assertTrue(
 				HttpStatus.SC_FORBIDDEN == response.getStatus() || HttpStatus.SC_UNAUTHORIZED == response.getStatus());
 	}
@@ -231,7 +232,7 @@ public final class WorkflowV3IntegrationTests extends TestBase {
 	public void getWorkflowById_should_returnUnauthorized_when_givenNoDataAccessToken() throws Exception {
     createAndTrackWorkflow();
     ClientResponse response = client.send(HttpMethod.GET,
-				String.format(GET_WORKFLOW_URL, CREATE_WORKFLOW_WORKFLOW_NAME), null, headers,
+				String.format(GET_WORKFLOW_URL, getLastCreatedWorkflowName()), null, headers,
 				client.getNoDataAccessToken());
 		assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatus());
 	}
@@ -241,7 +242,7 @@ public final class WorkflowV3IntegrationTests extends TestBase {
     createAndTrackWorkflow();
     Map<String, String> headersWithInvalidPartition = new HashMap<>(headers);
 		ClientResponse response = client.send(HttpMethod.GET,
-				String.format(GET_WORKFLOW_URL, CREATE_WORKFLOW_WORKFLOW_NAME), null,
+				String.format(GET_WORKFLOW_URL, getLastCreatedWorkflowName()), null,
 				HTTPClient.overrideHeader(headersWithInvalidPartition, INVALID_PARTITION), client.getAccessToken());
 		assertTrue(
 				HttpStatus.SC_FORBIDDEN == response.getStatus() || HttpStatus.SC_UNAUTHORIZED == response.getStatus());
@@ -251,10 +252,15 @@ public final class WorkflowV3IntegrationTests extends TestBase {
 
 	@Test
 	public void createWorkflow_should_returnWorkflowExists_when_givenDuplicateCreateWorkflowRequest() throws Exception {
-    createAndTrackWorkflow();
+		String payload = buildCreateWorkflowValidPayload();
+
+		ClientResponse firstResponse = client.send(HttpMethod.POST, CREATE_WORKFLOW_URL, payload, headers,
+				client.getAccessToken());
+		assertEquals(HttpStatus.SC_OK, firstResponse.getStatus(), firstResponse.toString());
+		trackWorkflow(firstResponse.getEntity(String.class));
 
 		ClientResponse duplicateResponse = client.send(HttpMethod.POST, CREATE_WORKFLOW_URL,
-				buildCreateWorkflowValidPayload(), headers, client.getAccessToken());
+				payload, headers, client.getAccessToken());
 
 		assertEquals(HttpStatus.SC_CONFLICT, duplicateResponse.getStatus());
 	}
@@ -262,10 +268,18 @@ public final class WorkflowV3IntegrationTests extends TestBase {
   @TestExternalAirflow
   void createWorkflow_should_returnWorkflowExists_when_givenDuplicateCreateWorkflowRequestOnExternalAirflow()
       throws Exception {
-    createAndTrackWorkflowExternalAirflow();
+    // buildCreateWorkflowValidPayloadExternalAirflow() returns a UUID-unique workflowName per
+    // call, so capture the payload once and POST it twice: first POST creates a fresh workflow
+    // (200), second POST with the same payload is the duplicate (409).
+    String payload = buildCreateWorkflowValidPayloadExternalAirflow();
+
+    ClientResponse firstResponse = client.send(HttpMethod.POST, CREATE_WORKFLOW_URL,
+        payload, headers, client.getAccessToken());
+    assertEquals(HttpStatus.SC_OK, firstResponse.getStatus(), firstResponse.toString());
+    trackWorkflow(firstResponse.getEntity(String.class));
 
     ClientResponse duplicateResponse = client.send(HttpMethod.POST, CREATE_WORKFLOW_URL,
-        buildCreateWorkflowValidPayloadExternalAirflow(), headers, client.getAccessToken());
+        payload, headers, client.getAccessToken());
 
     assertEquals(HttpStatus.SC_CONFLICT, duplicateResponse.getStatus());
   }
@@ -313,9 +327,10 @@ public final class WorkflowV3IntegrationTests extends TestBase {
 	@Test
 	public void deleteWorkflow_should_delete_when_givenValidWorkflowId() throws Exception {
     createAndTrackWorkflow();
+    String actualWorkflowName = createdWorkflowsWorkflowNames.get(createdWorkflowsWorkflowNames.size() - 1);
 
 		ClientResponse deleteResponse = client.send(HttpMethod.DELETE,
-				String.format(GET_WORKFLOW_URL, CREATE_WORKFLOW_WORKFLOW_NAME), null, headers, client.getAccessToken());
+				String.format(GET_WORKFLOW_URL, actualWorkflowName), null, headers, client.getAccessToken());
 		assertEquals(HttpStatus.SC_NO_CONTENT, deleteResponse.getStatus());
 	}
 
@@ -324,7 +339,7 @@ public final class WorkflowV3IntegrationTests extends TestBase {
     createAndTrackWorkflowExternalAirflow();
 
     ClientResponse deleteResponse = client.send(HttpMethod.DELETE,
-        String.format(GET_WORKFLOW_URL, WORKFLOW_NAME_EXTERNAL_AIRFLOW), null, headers, client.getAccessToken());
+        String.format(GET_WORKFLOW_URL, getLastCreatedWorkflowName()), null, headers, client.getAccessToken());
     assertEquals(HttpStatus.SC_NO_CONTENT, deleteResponse.getStatus());
   }
 
@@ -339,7 +354,7 @@ public final class WorkflowV3IntegrationTests extends TestBase {
 	public void deleteWorkflow_should_returnForbidden_when_notGivenAccessToken() throws Exception {
     createAndTrackWorkflow();
     ClientResponse response = client.send(HttpMethod.DELETE,
-				String.format(GET_WORKFLOW_URL, CREATE_WORKFLOW_WORKFLOW_NAME), null, headers, null);
+				String.format(GET_WORKFLOW_URL, getLastCreatedWorkflowName()), null, headers, null);
 		assertTrue(
 				HttpStatus.SC_FORBIDDEN == response.getStatus() || HttpStatus.SC_UNAUTHORIZED == response.getStatus());
 	}
@@ -348,7 +363,7 @@ public final class WorkflowV3IntegrationTests extends TestBase {
 	public void deleteWorkflow_should_returnUnauthorized_when_givenNoDataAccessToken() throws Exception {
     createAndTrackWorkflow();
     ClientResponse response = client.send(HttpMethod.DELETE,
-				String.format(GET_WORKFLOW_URL, CREATE_WORKFLOW_WORKFLOW_NAME), null, headers,
+				String.format(GET_WORKFLOW_URL, getLastCreatedWorkflowName()), null, headers,
 				client.getNoDataAccessToken());
 		assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatus());
 	}
@@ -358,7 +373,7 @@ public final class WorkflowV3IntegrationTests extends TestBase {
     createAndTrackWorkflow();
     Map<String, String> headersWithInvalidPartition = new HashMap<>(headers);
 		ClientResponse response = client.send(HttpMethod.DELETE,
-				String.format(GET_WORKFLOW_URL, CREATE_WORKFLOW_WORKFLOW_NAME), null,
+				String.format(GET_WORKFLOW_URL, getLastCreatedWorkflowName()), null,
 				HTTPClient.overrideHeader(headersWithInvalidPartition, INVALID_PARTITION), client.getAccessToken());
 		assertTrue(
 				HttpStatus.SC_FORBIDDEN == response.getStatus() || HttpStatus.SC_UNAUTHORIZED == response.getStatus());
