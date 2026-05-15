@@ -21,9 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.opengroup.osdu.workflow.consts.TestConstants.CREATE_SYSTEM_WORKFLOW_URL;
 import static org.opengroup.osdu.workflow.consts.TestConstants.CREATE_WORKFLOW_RUN_URL;
 import static org.opengroup.osdu.workflow.consts.TestConstants.CREATE_WORKFLOW_URL;
-import static org.opengroup.osdu.workflow.consts.TestConstants.CREATE_WORKFLOW_WORKFLOW_NAME;
 import static org.opengroup.osdu.workflow.consts.TestConstants.GET_WORKFLOW_RUN_URL;
-import static org.opengroup.osdu.workflow.consts.TestConstants.WORKFLOW_NAME_EXTERNAL_AIRFLOW;
 import static org.opengroup.osdu.workflow.util.PayloadBuilder.buildCreateWorkflowRunValidPayload;
 import static org.opengroup.osdu.workflow.util.PayloadBuilder.buildCreateWorkflowValidPayload;
 import static org.opengroup.osdu.workflow.util.PayloadBuilder.buildCreateWorkflowValidPayloadExternalAirflow;
@@ -54,6 +52,16 @@ public abstract class TestBase {
 	protected static final String INVALID_WORKFLOW_RUN_ID = "invalid-workflow-run-id";
 	protected static final String INVALID_PARTITION = "invalid-partition";
 
+
+  /**
+   * Returns the workflow name of the most recently-created workflow tracked in
+   * {@link #createdWorkflowsWorkflowNames}. Tests now use UUID-unique names per run
+   * and must resolve the actual name rather than referencing a static constant.
+   */
+  protected String getLastCreatedWorkflowName() {
+    return createdWorkflowsWorkflowNames.get(createdWorkflowsWorkflowNames.size() - 1);
+  }
+
 	public abstract void setup() throws Exception;
 
 	public abstract void tearDown() throws Exception;
@@ -79,17 +87,23 @@ public abstract class TestBase {
 		return response.getEntity(String.class);
 	}
 
-	protected String createWorkflowRun() throws Exception {
+	protected String createWorkflowRun(String workflowName) throws Exception {
 		ClientResponse response = client.send(HttpMethod.POST,
-				String.format(CREATE_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME),
+				String.format(CREATE_WORKFLOW_RUN_URL, workflowName),
 				buildCreateWorkflowRunValidPayload(), headers, client.getAccessToken());
 		assertEquals(HttpStatus.OK.value(), response.getStatus());
 		return response.getEntity(String.class);
 	}
 
+  /**
+   * Creates a workflow run for the most recently tracked workflow. Callers MUST invoke
+   * {@link #createAndTrackWorkflowExternalAirflow()} immediately beforehand so that the
+   * external-airflow workflow is the last entry in {@link #createdWorkflowsWorkflowNames}
+   * and therefore the one resolved by {@link #getLastCreatedWorkflowName()}.
+   */
   protected String createWorkflowRunExternalAirflow() throws Exception {
     ClientResponse response = client.send(HttpMethod.POST,
-        String.format(CREATE_WORKFLOW_RUN_URL, WORKFLOW_NAME_EXTERNAL_AIRFLOW),
+        String.format(CREATE_WORKFLOW_RUN_URL, getLastCreatedWorkflowName()),
         buildCreateWorkflowRunValidPayload(), headers, client.getAccessToken());
     assertEquals(HttpStatus.OK.value(), response.getStatus());
     return response.getEntity(String.class);
@@ -141,13 +155,15 @@ public abstract class TestBase {
   }
 
   protected Map<String, String> createAndTrackWorkflowRun() throws Exception {
-    String workflowRunResponseBody = createWorkflowRun();
-    return trackWorkflowRun(CREATE_WORKFLOW_WORKFLOW_NAME, workflowRunResponseBody);
+    String actualWorkflowName = getLastCreatedWorkflowName();
+    String workflowRunResponseBody = createWorkflowRun(actualWorkflowName);
+    return trackWorkflowRun(actualWorkflowName, workflowRunResponseBody);
   }
 
   protected Map<String, String> createAndTrackWorkflowRunExternalAirflow() throws Exception {
+    String actualWorkflowName = getLastCreatedWorkflowName();
     String workflowRunResponseBody = createWorkflowRunExternalAirflow();
-    return trackWorkflowRun(WORKFLOW_NAME_EXTERNAL_AIRFLOW, workflowRunResponseBody);
+    return trackWorkflowRun(actualWorkflowName, workflowRunResponseBody);
   }
 
   private Map<String, String> trackWorkflowRun(String workflowName, String workflowRunResponseBody) throws JsonProcessingException {

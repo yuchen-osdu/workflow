@@ -12,6 +12,7 @@ import static org.opengroup.osdu.workflow.consts.TestConstants.WORKFLOW_NAME_EXT
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -85,9 +86,23 @@ public class PayloadBuilder {
 		return new Gson().toJson(payload);
 	}
 
+  /**
+   * Builds an external-airflow create-workflow payload with a UUID-suffixed workflowName per
+   * call to avoid 409 Conflict from stale rows left by prior failed/aborted runs. The DAG
+   * pointer ({@code dagName} in {@code registrationInstructions}) is unchanged, so it still
+   * targets the pre-deployed {@code TEST_DAG_NAME_EXTERNAL_AIRFLOW} DAG. Tests that need to
+   * post the same payload twice (e.g. duplicate-create) MUST capture the result of one call
+   * and reuse it; otherwise each call yields a different workflowName.
+   *
+   * <p>Hyphens are stripped from the UUID so the resulting name fits the service-side
+   * {@code ^[a-zA-Z0-9._-]{1,64}$} validator: {@code WORKFLOW_NAME_EXTERNAL_AIRFLOW} (default
+   * 31 chars) + {@code "-"} + 32-char UUID = 64 chars.
+   */
   public static String buildCreateWorkflowValidPayloadExternalAirflow() {
     Map<String, Object> payload = new HashMap<>();
-    payload.put("workflowName", WORKFLOW_NAME_EXTERNAL_AIRFLOW);
+    payload.put(
+        "workflowName",
+        WORKFLOW_NAME_EXTERNAL_AIRFLOW + "-" + UUID.randomUUID().toString().replace("-", ""));
     payload.put(
         "registrationInstructions",
         Map.of(

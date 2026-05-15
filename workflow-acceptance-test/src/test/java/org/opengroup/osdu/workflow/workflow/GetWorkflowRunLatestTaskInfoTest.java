@@ -135,8 +135,7 @@ public final class GetWorkflowRunLatestTaskInfoTest extends TestBase {
   void testGetLatestTaskDetailsOfNotExistingWorkflowRunOnExternalAirflow() throws Exception {
     createAndTrackWorkflowExternalAirflow();
 
-    String existingWorkflowNotExistingRunUrl = String.format(GET_LATEST_DETAILS_BY_ID_API_ENDPOINT,
-        WORKFLOW_NAME_EXTERNAL_AIRFLOW, INVALID_WORKFLOW_RUN_ID);
+    String existingWorkflowNotExistingRunUrl = String.format(GET_LATEST_DETAILS_BY_ID_API_ENDPOINT, getLastCreatedWorkflowName(), INVALID_WORKFLOW_RUN_ID);
 
     ClientResponse response = client.send(HttpMethod.GET, existingWorkflowNotExistingRunUrl, null, headers,
         client.getAccessToken());
@@ -172,7 +171,7 @@ public final class GetWorkflowRunLatestTaskInfoTest extends TestBase {
 
     String runId = workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD);
 
-    String latestRunDetailsUrl = String.format(GET_LATEST_DETAILS_BY_ID_API_ENDPOINT, WORKFLOW_NAME_EXTERNAL_AIRFLOW,
+    String latestRunDetailsUrl = String.format(GET_LATEST_DETAILS_BY_ID_API_ENDPOINT, getLastCreatedWorkflowName(),
         runId);
 
     Thread.sleep(5000);

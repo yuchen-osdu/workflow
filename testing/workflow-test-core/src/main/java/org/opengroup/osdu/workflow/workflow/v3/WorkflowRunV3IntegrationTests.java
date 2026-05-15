@@ -82,10 +82,11 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
     String workflowRunResponseBody = createWorkflowRun();
     Map<String, String> workflowRunInfo = new ObjectMapper().readValue(workflowRunResponseBody, HashMap.class);
     createdWorkflowRuns.add(workflowRunInfo);
+    String actualWorkflowName = getLastCreatedWorkflowName();
 
     ClientResponse response = client.send(
         HttpMethod.GET,
-        String.format(GET_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
+        String.format(GET_WORKFLOW_RUN_URL, actualWorkflowName, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
         null,
         headers,
         client.getAccessToken()
@@ -114,7 +115,7 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
 
     ClientResponse response = client.send(
         HttpMethod.GET,
-        String.format(GET_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME, INVALID_WORKFLOW_RUN_ID),
+        String.format(GET_WORKFLOW_RUN_URL, getLastCreatedWorkflowName(), INVALID_WORKFLOW_RUN_ID),
         null,
         headers,
         client.getAccessToken()
@@ -135,7 +136,7 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
 
     ClientResponse response = client.send(
         HttpMethod.GET,
-        String.format(GET_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
+        String.format(GET_WORKFLOW_RUN_URL, getLastCreatedWorkflowName(), workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
         null,
         headers,
         null
@@ -155,7 +156,7 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
 
     ClientResponse response = client.send(
         HttpMethod.GET,
-        String.format(GET_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
+        String.format(GET_WORKFLOW_RUN_URL, getLastCreatedWorkflowName(), workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
         null,
         headers,
         client.getNoDataAccessToken()
@@ -178,7 +179,7 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
 
     ClientResponse response = client.send(
         HttpMethod.GET,
-        String.format(GET_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
+        String.format(GET_WORKFLOW_RUN_URL, getLastCreatedWorkflowName(), workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
         null,
         HTTPClient.overrideHeader(headersWithInvalidPartition, INVALID_PARTITION),
         client.getNoDataAccessToken()
@@ -221,7 +222,7 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
 
     ClientResponse duplicateRunIdResponse = client.send(
         HttpMethod.POST,
-        String.format(CREATE_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME),
+        String.format(CREATE_WORKFLOW_RUN_URL, getLastCreatedWorkflowName()),
         duplicateRunIdPayload,
         headers,
         client.getAccessToken()
@@ -249,7 +250,7 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
 
 	    ClientResponse duplicateRunIdResponse = client.send(
 	        HttpMethod.POST,
-	        String.format(CREATE_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME),
+	        String.format(CREATE_WORKFLOW_RUN_URL, getLastCreatedWorkflowName()),
 	        duplicateRunIdPayload,
 	        headers,
 	        client.getAccessToken()
@@ -279,7 +280,7 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
 
     ClientResponse response = client.send(
         HttpMethod.POST,
-        String.format(CREATE_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME),
+        String.format(CREATE_WORKFLOW_RUN_URL, getLastCreatedWorkflowName()),
         buildCreateWorkflowRunValidPayload(),
         headers,
         null
@@ -295,7 +296,7 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
 
     ClientResponse response = client.send(
         HttpMethod.POST,
-        String.format(CREATE_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME),
+        String.format(CREATE_WORKFLOW_RUN_URL, getLastCreatedWorkflowName()),
         buildCreateWorkflowRunValidPayload(),
         headers,
         client.getNoDataAccessToken()
@@ -313,7 +314,7 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
 
     ClientResponse response = client.send(
         HttpMethod.POST,
-        String.format(CREATE_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME),
+        String.format(CREATE_WORKFLOW_RUN_URL, getLastCreatedWorkflowName()),
         buildCreateWorkflowRunValidPayload(),
         HTTPClient.overrideHeader(headersWithInvalidPartition, INVALID_PARTITION),
         null
@@ -337,7 +338,7 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
 
     ClientResponse response = client.send(
         HttpMethod.GET,
-        String.format(CREATE_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME),
+        String.format(CREATE_WORKFLOW_RUN_URL, getLastCreatedWorkflowName()),
         null,
         headers,
         client.getAccessToken()
@@ -447,12 +448,13 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
     String workflowRunResponseBody = createWorkflowRun();
     Map<String, String> workflowRunInfo = new ObjectMapper().readValue(workflowRunResponseBody, HashMap.class);
     createdWorkflowRuns.add(workflowRunInfo);
+    String actualWorkflowName = getLastCreatedWorkflowName();
 
     String workflowRunStatus = WORKFLOW_STATUS_TYPE_RUNNING;
 
     ClientResponse response = client.send(
         HttpMethod.PUT,
-        String.format(GET_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
+        String.format(GET_WORKFLOW_RUN_URL, actualWorkflowName, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
         buildUpdateWorkflowRunValidPayloadWithGivenStatus(workflowRunStatus),
         headers,
         client.getAccessToken()
@@ -464,7 +466,7 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
     assertEquals(updateWorkflowRunInfo.get(WORKFLOW_RUN_ID_FIELD), workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD));
     assertEquals(updateWorkflowRunInfo.get(WORKFLOW_RUN_STATUS_FIELD), WORKFLOW_STATUS_TYPE_RUNNING);
 
-    String obtainedWorkflowRunStatus = getWorkflowRunStatus(CREATE_WORKFLOW_WORKFLOW_NAME, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD));
+    String obtainedWorkflowRunStatus = getWorkflowRunStatus(actualWorkflowName, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD));
 
     // Check not only for 'running' but also for 'success' and 'queued' as Airflow may return either
     List<String> expectedStatuses =
@@ -489,12 +491,13 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
     String workflowRunResponseBody = createWorkflowRun();
     Map<String, String> workflowRunInfo = new ObjectMapper().readValue(workflowRunResponseBody, HashMap.class);
     createdWorkflowRuns.add(workflowRunInfo);
+    String actualWorkflowName = getLastCreatedWorkflowName();
 
     String workflowRunStatus = WORKFLOW_STATUS_TYPE_FINISHED;
 
     ClientResponse response = client.send(
         HttpMethod.PUT,
-        String.format(GET_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
+        String.format(GET_WORKFLOW_RUN_URL, actualWorkflowName, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
         buildUpdateWorkflowRunValidPayloadWithGivenStatus(workflowRunStatus),
         headers,
         client.getAccessToken()
@@ -506,7 +509,7 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
     assertEquals(updateWorkflowRunInfo.get(WORKFLOW_RUN_ID_FIELD), workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD));
     assertEquals(updateWorkflowRunInfo.get(WORKFLOW_RUN_STATUS_FIELD), WORKFLOW_STATUS_TYPE_FINISHED);
 
-    String obtainedWorkflowRunStatus = getWorkflowRunStatus(CREATE_WORKFLOW_WORKFLOW_NAME, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD));
+    String obtainedWorkflowRunStatus = getWorkflowRunStatus(actualWorkflowName, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD));
 
     assertEquals(workflowRunStatus, obtainedWorkflowRunStatus);
   }
@@ -523,7 +526,7 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
 
     ClientResponse response = client.send(
         HttpMethod.PUT,
-        String.format(GET_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
+        String.format(GET_WORKFLOW_RUN_URL, getLastCreatedWorkflowName(), workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
         buildUpdateWorkflowRunInvalidPayloadStatus(),
         headers,
         client.getAccessToken()
@@ -544,7 +547,7 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
 
     ClientResponse response = client.send(
         HttpMethod.PUT,
-        String.format(GET_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
+        String.format(GET_WORKFLOW_RUN_URL, getLastCreatedWorkflowName(), workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
         buildUpdateWorkflowRunInvalidRequestPayload(),
         headers,
         client.getAccessToken()
@@ -562,12 +565,13 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
     String workflowRunResponseBody = createWorkflowRun();
     Map<String, String> workflowRunInfo = new ObjectMapper().readValue(workflowRunResponseBody, HashMap.class);
     createdWorkflowRuns.add(workflowRunInfo);
+    String actualWorkflowName = getLastCreatedWorkflowName();
 
     String workflowRunStatus = WORKFLOW_STATUS_TYPE_FINISHED;
 
     ClientResponse response = client.send(
         HttpMethod.PUT,
-        String.format(GET_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
+        String.format(GET_WORKFLOW_RUN_URL, actualWorkflowName, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
         buildUpdateWorkflowRunValidPayloadWithGivenStatus(workflowRunStatus),
         headers,
         client.getAccessToken()
@@ -581,7 +585,7 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
 
     response = client.send(
         HttpMethod.PUT,
-        String.format(GET_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
+        String.format(GET_WORKFLOW_RUN_URL, actualWorkflowName, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
         buildUpdateWorkflowRunValidPayloadWithGivenStatus(workflowRunStatus),
         headers,
         client.getAccessToken()
@@ -627,7 +631,7 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
 
     ClientResponse response = client.send(
         HttpMethod.PUT,
-        String.format(GET_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME, INVALID_WORKFLOW_RUN_ID),
+        String.format(GET_WORKFLOW_RUN_URL, getLastCreatedWorkflowName(), INVALID_WORKFLOW_RUN_ID),
         buildUpdateWorkflowRunValidPayloadWithGivenStatus(workflowRunStatus),
         headers,
         client.getAccessToken()
@@ -650,7 +654,7 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
 
     ClientResponse response = client.send(
         HttpMethod.PUT,
-        String.format(GET_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
+        String.format(GET_WORKFLOW_RUN_URL, getLastCreatedWorkflowName(), workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
         buildUpdateWorkflowRunValidPayloadWithGivenStatus(workflowRunStatus),
         headers,
         null
@@ -673,7 +677,7 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
 
     ClientResponse response = client.send(
         HttpMethod.PUT,
-        String.format(GET_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
+        String.format(GET_WORKFLOW_RUN_URL, getLastCreatedWorkflowName(), workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
         buildUpdateWorkflowRunValidPayloadWithGivenStatus(workflowRunStatus),
         headers,
         client.getNoDataAccessToken()
@@ -697,7 +701,7 @@ public abstract class WorkflowRunV3IntegrationTests extends TestBase {
 
     ClientResponse response = client.send(
         HttpMethod.PUT,
-        String.format(GET_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME, workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
+        String.format(GET_WORKFLOW_RUN_URL, getLastCreatedWorkflowName(), workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD)),
         buildUpdateWorkflowRunValidPayloadWithGivenStatus(workflowRunStatus),
         HTTPClient.overrideHeader(headersWithInvalidPartition, INVALID_PARTITION),
         client.getAccessToken()

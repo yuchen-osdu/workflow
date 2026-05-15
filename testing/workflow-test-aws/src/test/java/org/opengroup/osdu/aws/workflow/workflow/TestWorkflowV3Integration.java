@@ -22,17 +22,21 @@ import org.junit.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.opengroup.osdu.aws.workflow.util.AwsPayloadBuilder;
 import org.opengroup.osdu.aws.workflow.util.HTTPClientAWS;
 import org.opengroup.osdu.workflow.workflow.v3.WorkflowV3IntegrationTests;
+import org.springframework.http.HttpStatus;
 
 import javax.ws.rs.HttpMethod;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.sun.jersey.api.client.ClientResponse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.opengroup.osdu.workflow.consts.TestConstants.CREATE_WORKFLOW_URL;
 import static org.opengroup.osdu.workflow.consts.TestConstants.GET_DETAILS_WORKFLOW_RUN_URL;
 import static org.opengroup.osdu.workflow.consts.TestConstants.CREATE_WORKFLOW_WORKFLOW_NAME;
@@ -42,6 +46,7 @@ import static org.opengroup.osdu.workflow.util.PayloadBuilder.buildUpdateWorkflo
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TestWorkflowV3Integration extends WorkflowV3IntegrationTests {
 
@@ -87,6 +92,61 @@ public class TestWorkflowV3Integration extends WorkflowV3IntegrationTests {
     });
   }
 
+  /**
+   * AWS-only override: send a UUID-suffixed workflow name per run to avoid 409
+   * Conflict from stale DynamoDB rows left by prior failed runs.
+   * Azure/CIMPL/GC/IBM keep the base behavior (static name), which they require
+   * for matching a deployed Airflow DAG.
+   */
+  @Override
+  protected String createWorkflow() throws Exception {
+    ClientResponse response = client.send(
+        HttpMethod.POST,
+        CREATE_WORKFLOW_URL,
+        AwsPayloadBuilder.buildCreateWorkflowValidPayloadWithUniqueName(),
+        headers,
+        client.getAccessToken()
+    );
+    assertEquals(HttpStatus.OK.value(), response.getStatus(), response.toString());
+    return response.getEntity(String.class);
+  }
+
+  /**
+   * AWS-only override of the shared duplicate-create test. The shared version captures
+   * {@code buildCreateWorkflowValidPayload()} once and POSTs it twice, but that method
+   * returns a static workflow name (CREATE_WORKFLOW_WORKFLOW_NAME). Prior failed runs
+   * may leave that static row in DynamoDB, so the first POST returns 409 before the
+   * duplicate check can run. Use a captured UUID-unique payload instead: first POST
+   * creates a fresh workflow (200), second POST with the same payload is the duplicate
+   * (409).
+   */
+  @Override
+  @Test
+  public void createWorkflow_should_returnWorkflowExists_when_givenDuplicateCreateWorkflowRequest() throws Exception {
+    String payload = AwsPayloadBuilder.buildCreateWorkflowValidPayloadWithUniqueName();
+
+    ClientResponse firstResponse = client.send(
+        HttpMethod.POST,
+        CREATE_WORKFLOW_URL,
+        payload,
+        headers,
+        client.getAccessToken()
+    );
+    assertEquals(HttpStatus.OK.value(), firstResponse.getStatus(), firstResponse.toString());
+    Map<String, String> workflowInfo = new ObjectMapper().readValue(firstResponse.getEntity(String.class), HashMap.class);
+    createdWorkflows.add(workflowInfo);
+
+    ClientResponse duplicateResponse = client.send(
+        HttpMethod.POST,
+        CREATE_WORKFLOW_URL,
+        payload,
+        headers,
+        client.getAccessToken()
+    );
+
+    assertEquals(org.apache.http.HttpStatus.SC_CONFLICT, duplicateResponse.getStatus());
+  }
+
   protected void deleteTestWorkflows(String workflowName) throws Exception {
 
     List<String> runIds = getWorkflowRuns(workflowName);
@@ -122,19 +182,25 @@ public class TestWorkflowV3Integration extends WorkflowV3IntegrationTests {
 
     String respBody = response.getEntity(String.class);
 
-    JsonArray responseDataArr = gson.fromJson(respBody, JsonArray.class);
-
-
-    ArrayList<String> runIds = new ArrayList<String>();
-
-    for (JsonElement responseData: responseDataArr) {
-        runIds.add(responseData.getAsJsonObject().get("runId").getAsString());
+    // Handle case where workflow doesn't exist or has no runs
+    if (response.getStatus() != 200) {
+      return new ArrayList<String>();
     }
 
+    try {
+      JsonArray responseDataArr = gson.fromJson(respBody, JsonArray.class);
+      ArrayList<String> runIds = new ArrayList<String>();
 
-    return runIds;
+      for (JsonElement responseData: responseDataArr) {
+          runIds.add(responseData.getAsJsonObject().get("runId").getAsString());
+      }
 
+      return runIds;
+    } catch (JsonParseException | IllegalStateException | NullPointerException e) {
+      // Unexpected body shape for a 200 response; log and assume no runs so teardown can proceed
+      System.err.println("getWorkflowRuns: unable to parse response body for workflow '"
+          + workflowName + "': " + e.getMessage());
+      return new ArrayList<String>();
+    }
   }
-
-
 }

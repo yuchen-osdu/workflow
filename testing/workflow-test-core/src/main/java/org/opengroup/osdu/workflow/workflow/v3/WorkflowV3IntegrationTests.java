@@ -204,7 +204,7 @@ public abstract class WorkflowV3IntegrationTests extends TestBase {
     Map<String, String> workflowInfo = getWorkflowInfoFromCreateWorkflowResponseBody(responseBody);
     createdWorkflows.add(workflowInfo);
 
-    String url = CREATE_WORKFLOW_URL + "/_" + CREATE_WORKFLOW_WORKFLOW_NAME;
+    String url = CREATE_WORKFLOW_URL + "/_" + getLastCreatedWorkflowName();
     ClientResponse response = client.send(
         HttpMethod.GET,
         url,
@@ -225,9 +225,10 @@ public abstract class WorkflowV3IntegrationTests extends TestBase {
     Map<String, String> workflowInfo = getWorkflowInfoFromCreateWorkflowResponseBody(responseBody);
     createdWorkflows.add(workflowInfo);
 
+    String actualWorkflowName = workflowInfo.get(WORKFLOW_NAME_FIELD);
     ClientResponse response = client.send(
         HttpMethod.GET,
-        String.format(GET_WORKFLOW_URL, CREATE_WORKFLOW_WORKFLOW_NAME),
+        String.format(GET_WORKFLOW_URL, actualWorkflowName),
         null,
         headers,
         client.getAccessToken()
@@ -258,7 +259,7 @@ public abstract class WorkflowV3IntegrationTests extends TestBase {
     createdWorkflows.add(workflowInfo);
     ClientResponse response = client.send(
         HttpMethod.GET,
-        String.format(GET_WORKFLOW_URL, CREATE_WORKFLOW_WORKFLOW_NAME),
+        String.format(GET_WORKFLOW_URL, getLastCreatedWorkflowName()),
         null,
         headers,
         null
@@ -273,7 +274,7 @@ public abstract class WorkflowV3IntegrationTests extends TestBase {
     createdWorkflows.add(workflowInfo);
     ClientResponse response = client.send(
         HttpMethod.GET,
-        String.format(GET_WORKFLOW_URL, CREATE_WORKFLOW_WORKFLOW_NAME),
+        String.format(GET_WORKFLOW_URL, getLastCreatedWorkflowName()),
         null,
         headers,
         client.getNoDataAccessToken()
@@ -289,7 +290,7 @@ public abstract class WorkflowV3IntegrationTests extends TestBase {
     Map<String, String> headersWithInvalidPartition = new HashMap<>(headers);
     ClientResponse response = client.send(
         HttpMethod.GET,
-        String.format(GET_WORKFLOW_URL, CREATE_WORKFLOW_WORKFLOW_NAME),
+        String.format(GET_WORKFLOW_URL, getLastCreatedWorkflowName()),
         null,
         HTTPClient.overrideHeader(headersWithInvalidPartition, INVALID_PARTITION),
         client.getAccessToken()
@@ -301,14 +302,25 @@ public abstract class WorkflowV3IntegrationTests extends TestBase {
 
   @Test
   public void createWorkflow_should_returnWorkflowExists_when_givenDuplicateCreateWorkflowRequest() throws Exception{
-    String responseBody = createWorkflow();
+    String payload = buildCreateWorkflowValidPayload();
+
+    ClientResponse firstResponse = client.send(
+        HttpMethod.POST,
+        CREATE_WORKFLOW_URL,
+        payload,
+        headers,
+        client.getAccessToken()
+    );
+    assertEquals(HttpStatus.SC_OK, firstResponse.getStatus(), firstResponse.toString());
+    String responseBody = firstResponse.getEntity(String.class);
+
     Map<String, String> workflowInfo = getWorkflowInfoFromCreateWorkflowResponseBody(responseBody);
     createdWorkflows.add(workflowInfo);
 
     ClientResponse duplicateResponse = client.send(
         HttpMethod.POST,
         CREATE_WORKFLOW_URL,
-        buildCreateWorkflowValidPayload(),
+        payload,
         headers,
         client.getAccessToken()
     );
@@ -373,9 +385,10 @@ public abstract class WorkflowV3IntegrationTests extends TestBase {
     Map<String, String> workflowInfo = getWorkflowInfoFromCreateWorkflowResponseBody(responseBody);
     createdWorkflows.add(workflowInfo);
 
+    String actualWorkflowName = workflowInfo.get(WORKFLOW_NAME_FIELD);
     ClientResponse deleteResponse = client.send(
         HttpMethod.DELETE,
-        String.format(GET_WORKFLOW_URL, CREATE_WORKFLOW_WORKFLOW_NAME),
+        String.format(GET_WORKFLOW_URL, actualWorkflowName),
         null,
         headers,
         client.getAccessToken()
@@ -402,7 +415,7 @@ public abstract class WorkflowV3IntegrationTests extends TestBase {
     createdWorkflows.add(workflowInfo);
     ClientResponse response = client.send(
         HttpMethod.DELETE,
-        String.format(GET_WORKFLOW_URL, CREATE_WORKFLOW_WORKFLOW_NAME),
+        String.format(GET_WORKFLOW_URL, getLastCreatedWorkflowName()),
         null,
         headers,
         null
@@ -417,7 +430,7 @@ public abstract class WorkflowV3IntegrationTests extends TestBase {
     createdWorkflows.add(workflowInfo);
     ClientResponse response = client.send(
         HttpMethod.DELETE,
-        String.format(GET_WORKFLOW_URL, CREATE_WORKFLOW_WORKFLOW_NAME),
+        String.format(GET_WORKFLOW_URL, getLastCreatedWorkflowName()),
         null,
         headers,
         client.getNoDataAccessToken()
@@ -433,7 +446,7 @@ public abstract class WorkflowV3IntegrationTests extends TestBase {
     Map<String, String> headersWithInvalidPartition = new HashMap<>(headers);
     ClientResponse response = client.send(
         HttpMethod.DELETE,
-        String.format(GET_WORKFLOW_URL, CREATE_WORKFLOW_WORKFLOW_NAME),
+        String.format(GET_WORKFLOW_URL, getLastCreatedWorkflowName()),
         null,
         HTTPClient.overrideHeader(headersWithInvalidPartition, INVALID_PARTITION),
         client.getAccessToken()

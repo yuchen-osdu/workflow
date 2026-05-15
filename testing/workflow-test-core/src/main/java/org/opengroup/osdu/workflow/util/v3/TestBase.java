@@ -60,6 +60,20 @@ public abstract class TestBase {
   public abstract void setup() throws Exception;
   public abstract void tearDown() throws Exception;
 
+  /**
+   * Returns the workflow name of the most recently-created workflow tracked in
+   * {@link #createdWorkflows}. Tests may create workflows with a provider-specific
+   * naming strategy (for example, AWS appends a UUID to avoid cross-run conflicts),
+   * so follow-up URLs must resolve the actual name from the response rather than
+   * referencing a static constant.
+   *
+   * <p>For providers that use a static name, this returns the same value as
+   * {@code CREATE_WORKFLOW_WORKFLOW_NAME}, so the behavior is unchanged.
+   */
+  protected String getLastCreatedWorkflowName() {
+    return createdWorkflows.get(createdWorkflows.size() - 1).get(WORKFLOW_NAME_FIELD);
+  }
+
   protected String createWorkflow() throws Exception {
     ClientResponse response = client.send(
         HttpMethod.POST,
@@ -87,7 +101,7 @@ public abstract class TestBase {
   protected String createWorkflowRun() throws Exception {
     ClientResponse response = client.send(
         HttpMethod.POST,
-        String.format(CREATE_WORKFLOW_RUN_URL, CREATE_WORKFLOW_WORKFLOW_NAME),
+        String.format(CREATE_WORKFLOW_RUN_URL, getLastCreatedWorkflowName()),
         buildCreateWorkflowRunValidPayload(),
         headers,
         client.getAccessToken()
@@ -120,7 +134,11 @@ public abstract class TestBase {
   protected void waitForWorkflowRunsToComplete(List<Map<String, String>> createdWorkflowRuns,
                                                Set<String> completedWorkflowRunIds) throws Exception {
     for(Map<String, String> createdWorkflow: createdWorkflowRuns) {
-      String workflowName = CREATE_WORKFLOW_WORKFLOW_NAME;
+      // Run-response body may carry only workflowId; the service treats workflowId ==
+      // workflowName at the GET endpoint, so either value is a valid path segment.
+      String workflowName = createdWorkflow.get(WORKFLOW_NAME_FIELD) != null
+          ? createdWorkflow.get(WORKFLOW_NAME_FIELD)
+          : createdWorkflow.get(WORKFLOW_ID_FIELD);
       String workflowRunId = createdWorkflow.get(WORKFLOW_RUN_ID_FIELD);
       if(!completedWorkflowRunIds.contains(workflowRunId)) {
         String workflowRunStatus;

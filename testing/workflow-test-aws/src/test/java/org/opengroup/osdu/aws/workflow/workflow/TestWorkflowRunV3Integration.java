@@ -29,18 +29,18 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 import com.sun.jersey.api.client.ClientResponse;
 
 import org.junit.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.opengroup.osdu.aws.workflow.util.AwsPayloadBuilder;
 import org.opengroup.osdu.aws.workflow.util.HTTPClientAWS;
 import org.opengroup.osdu.workflow.workflow.v3.WorkflowRunV3IntegrationTests;
 import org.springframework.http.HttpStatus;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.opengroup.osdu.workflow.consts.TestConstants.CREATE_WORKFLOW_URL;
@@ -109,6 +109,25 @@ public class TestWorkflowRunV3Integration extends WorkflowRunV3IntegrationTests 
     });
   }
 
+  /**
+   * AWS-only override: send a UUID-suffixed workflow name per run to avoid 409
+   * Conflict from stale DynamoDB rows left by prior failed runs.
+   * Azure/CIMPL/GC/IBM keep the base behavior (static name), which they require
+   * for matching a deployed Airflow DAG.
+   */
+  @Override
+  protected String createWorkflow() throws Exception {
+    ClientResponse response = client.send(
+        HttpMethod.POST,
+        CREATE_WORKFLOW_URL,
+        AwsPayloadBuilder.buildCreateWorkflowValidPayloadWithUniqueName(),
+        headers,
+        client.getAccessToken()
+    );
+    assertEquals(response.toString(), HttpStatus.OK.value(), response.getStatus());
+    return response.getEntity(String.class);
+  }
+
   @Test
   @Override
   public void updateWorkflowRunStatus_should_returnNotFound_when_givenInvalidWorkflowName() throws Exception {
@@ -168,17 +187,25 @@ public class TestWorkflowRunV3Integration extends WorkflowRunV3IntegrationTests 
 
     String respBody = response.getEntity(String.class);
 
-    JsonArray responseDataArr = gson.fromJson(respBody, JsonArray.class);
-
-
-    ArrayList<String> runIds = new ArrayList<String>();
-
-    for (JsonElement responseData: responseDataArr) {
-        runIds.add(responseData.getAsJsonObject().get("runId").getAsString());
+    // Handle case where workflow doesn't exist or has no runs
+    if (response.getStatus() != 200) {
+      return new ArrayList<String>();
     }
 
+    try {
+      JsonArray responseDataArr = gson.fromJson(respBody, JsonArray.class);
+      ArrayList<String> runIds = new ArrayList<String>();
 
-    return runIds;
+      for (JsonElement responseData: responseDataArr) {
+          runIds.add(responseData.getAsJsonObject().get("runId").getAsString());
+      }
 
+      return runIds;
+    } catch (JsonParseException | IllegalStateException | NullPointerException e) {
+      // Unexpected body shape for a 200 response; log and assume no runs so teardown can proceed
+      System.err.println("getWorkflowRuns: unable to parse response body for workflow '"
+          + workflowName + "': " + e.getMessage());
+      return new ArrayList<String>();
+    }
   }
 }
