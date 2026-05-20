@@ -16,3 +16,11 @@ cimpl-dev2-acceptance-test:
     EXTERNAL_AIRFLOW_TESTS_ENABLED: "true"
     TEST_DAG_NAME_EXTERNAL_AIRFLOW: "airflow_monitoring"
     EXTERNAL_AIRFLOW_SECRET: "airflow-workflow-tests"
+
+#standby (Blue-Green) jobs
+
+cimpl-standby-acceptance-test:
+  variables:
+    EXTERNAL_AIRFLOW_TESTS_ENABLED: "true"
+    TEST_DAG_NAME_EXTERNAL_AIRFLOW: "airflow_monitoring"
+    EXTERNAL_AIRFLOW_SECRET: "airflow-workflow-tests"
