@@ -1,6 +1,4 @@
 variables:
-  IBM_BUILD_SUBDIR: provider/workflow-ibm
-  IBM_INT_TEST_SUBDIR: testing/workflow-test-ibm
 
   AWS_BUILD_SUBDIR: provider/workflow-aws/build-aws
   AWS_TEST_SUBDIR: testing/workflow-test-aws
@@ -12,8 +10,6 @@ variables:
   AWS_EKS_DEPLOYMENT_NAME: os-ingestion-workflow
   AWS_SERVICE_NAMESPACE: osdu-ingest
 
-  IBM_HELM_CONFIG_PATH: devops/ibm/ibm-workflow-config
-  IBM_HELM_DEPLOY_PATH: devops/ibm/ibm-workflow-deploy
   # Start azure specific variables
   AZURE_SERVICE: ingestion-workfow
   AZURE_BUILD_SUBDIR: provider/workflow-azure
@@ -43,9 +39,6 @@ include:
     file: "cloud-providers/gc-global.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
-    file: "cloud-providers/ibm.yml"
-
-  - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/aws-global.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
@@ -65,9 +58,6 @@ include:
 
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/gc-one-pipeline.yml"
-
-  - project: "osdu/platform/ci-cd-pipelines"
-    file: "cloud-providers/ibm-one-pipeline.yml"
 
   - local: "devops/core-plus/pipeline/override-stages.yml"
 
