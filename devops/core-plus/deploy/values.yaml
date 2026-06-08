@@ -17,12 +17,11 @@ data:
   workflowHost: "http://workflow"
   dagNames:
     - csv_ingestion
-    - Energistics_xml_ingest
-    - manifest_ingestion
     - Osdu_ingest
-    - Segy_to_vds_conversion_sdms
-    - Segy_to_zgy_conversion
     - Osdu_ingest_by_reference
+    - eds_ingest
+    - eds_naturalization
+    - eds_scheduler
   # Deployment variables
   requestsCpu: "5m"
   requestsMemory: "650Mi"
