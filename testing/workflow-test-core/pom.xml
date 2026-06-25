@@ -32,11 +32,8 @@
   <description>Core test project for the workflow service</description>
 
   <properties>
-    <maven.compiler.target>17</maven.compiler.target>
-    <maven.compiler.source>17</maven.compiler.source>
     <spring-boot.version>2.2.2.RELEASE</spring-boot.version>
     <jersey.version>1.19.4</jersey.version>
-    <os-core-common.version>0.25.0</os-core-common.version>
     <jackson-databind.version>2.13.2.2</jackson-databind.version>
     <jackson.version>2.13.2</jackson.version>
   </properties>
@@ -57,7 +54,16 @@
     <dependency>
       <groupId>org.opengroup.osdu</groupId>
       <artifactId>os-core-common</artifactId>
-      <version>${os-core-common.version}</version>
+    </dependency>
+    <!-- spring-web and slf4j-api used directly in sources; no longer available
+         transitively from os-core-common 7.0.0 — versions managed by spring-boot BOM -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -97,7 +103,6 @@
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
-      <version>1.18.26</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

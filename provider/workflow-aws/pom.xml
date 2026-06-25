@@ -33,7 +33,6 @@
   <properties>
     <aws.sdk.version>2.25.11</aws.sdk.version>
     <log4j2.version>2.17.1</log4j2.version>
-    <netty.version>4.1.128.Final</netty.version>
     <tomcat.version>10.1.48</tomcat.version>
     <spring-core.version>6.2.11</spring-core.version>
   </properties>
@@ -74,11 +73,17 @@
       <artifactId>os-core-lib-aws</artifactId>
       <version>6.0.0</version>
     </dependency>
+        <!-- os-core-common 7.x declares lettuce-core as provided (CVE-2025-58057); declare
+             it here so os-core-lib-aws's CacheFactory.getRedisCache resolves io.lettuce.core.RedisException -->
+        <dependency>
+            <groupId>io.lettuce</groupId>
+            <artifactId>lettuce-core</artifactId>
+            <version>${lettuce.version}</version>
+        </dependency>
 
     <dependency>
       <groupId>org.opengroup.osdu</groupId>
       <artifactId>workflow-core</artifactId>
-      <version>0.30.0-SNAPSHOT</version>
     </dependency>
 
     <!-- Third party Apache 2.0 license packages -->
@@ -90,7 +95,6 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot</artifactId>
-      <version>3.3.11</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -158,25 +162,21 @@
     <dependency>
       <groupId>org.jsoup</groupId>
       <artifactId>jsoup</artifactId>
-      <version>1.17.2</version>
     </dependency>
 
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>${jackson-databind.version}</version>
     </dependency>
 
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>${jackson-databind.version}</version>
     </dependency>
 
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
-      <version>${jackson-databind.version}</version>
     </dependency>
 
     <dependency>
@@ -192,7 +192,6 @@
     <dependency>
       <groupId>org.junit.vintage</groupId>
       <artifactId>junit-vintage-engine</artifactId>
-      <version>5.8.2</version>
       <scope>test</scope>
     </dependency>
 
@@ -228,7 +227,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.1.2</version>
+        <version>${maven-surefire-plugin.version}</version>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -285,7 +284,7 @@
       <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.10</version>
+                <version>0.8.13</version>
                 <executions>
                     <execution>
                         <goals>

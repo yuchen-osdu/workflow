@@ -55,12 +55,19 @@
     <dependency>
       <groupId>org.opengroup.osdu</groupId>
       <artifactId>workflow-core</artifactId>
-      <version>${parent.version}</version>
     </dependency>
     <dependency>
       <groupId>org.opengroup.osdu</groupId>
       <artifactId>core-lib-azure</artifactId>
       <version>${core-lib-azure.version}</version>
+    </dependency>
+    <!--
+        os-core-common 7.0.0 declares lettuce-core as provided. workflow-azure imports
+        io.lettuce.core.* directly, so we declare it explicitly here.
+    -->
+    <dependency>
+      <groupId>io.lettuce</groupId>
+      <artifactId>lettuce-core</artifactId>
     </dependency>
 
     <!-- Spring Dependencies -->
@@ -163,7 +170,7 @@
             <exclude>**/*org/opengroup/osdu/workflow/provider/azure/security/**</exclude>
           </excludes>
         </configuration>
-        <version>${jacoco-plugin.version}</version>
+      <version>0.8.13</version>
         <executions>
           <execution>
             <goals>

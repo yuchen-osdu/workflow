@@ -1,6 +1,7 @@
 package org.opengroup.osdu.workflow.logging;
 
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,8 +16,11 @@ import org.opengroup.osdu.core.common.logging.audit.AuditPayload;
 import org.opengroup.osdu.core.common.logging.audit.AuditStatus;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 
+import org.opengroup.osdu.workflow.model.WorkflowRole;
+
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +43,9 @@ public class AuditLoggerTest {
   public static final String WORKFLOW_RUN_ID = "WF004";
   public static final String WORKFLOW_RUN_MESSAGE = "Successfully run workflow";
   private static final String USER_EMAIL = "user@email.com";
+  private static final String USER_IP = "127.0.0.1";
+  private static final String USER_AGENT = "test-agent";
+  private static final String USER_AUTHORIZED_GROUP = "service.workflow.admin";
 
   private List<String> resources = new ArrayList<>();
 
@@ -48,6 +55,9 @@ public class AuditLoggerTest {
   @Mock
   private DpsHeaders headers;
 
+  @Mock
+  private HttpServletRequest httpServletRequest;
+
   @InjectMocks
   private AuditLogger auditLogger;
 
@@ -55,6 +65,9 @@ public class AuditLoggerTest {
   void init() {
     resources = Arrays.asList("resource1", "resource2");
     lenient().when(headers.getUserEmail()).thenReturn(USER_EMAIL);
+    lenient().when(headers.getUserAuthorizedGroupName()).thenReturn(USER_AUTHORIZED_GROUP);
+    lenient().when(httpServletRequest.getRemoteAddr()).thenReturn(USER_IP);
+    lenient().when(httpServletRequest.getHeader("user-agent")).thenReturn(USER_AGENT);
   }
 
   @Test
@@ -72,6 +85,7 @@ public class AuditLoggerTest {
     assertEquals(WORKFLOW_CREATE_ID, auditLogPayload.get("actionId"));
     assertEquals(WORKFLOW_CREATE_MESSAGE, auditLogPayload.get("message"));
     assertEquals(resources, auditLogPayload.get("resources"));
+    assertEquals(Collections.singletonList(WorkflowRole.ADMIN), auditLogPayload.get("requiredGroupsForAction"));
   }
 
   @Test
@@ -89,6 +103,7 @@ public class AuditLoggerTest {
     assertEquals(WORKFLOW_UPDATE_ID, auditLogPayload.get("actionId"));
     assertEquals(WORKFLOW_UPDATE_MESSAGE, auditLogPayload.get("message"));
     assertEquals(resources, auditLogPayload.get("resources"));
+    assertEquals(Arrays.asList(WorkflowRole.CREATOR, WorkflowRole.ADMIN), auditLogPayload.get("requiredGroupsForAction"));
   }
 
   @Test
@@ -106,6 +121,7 @@ public class AuditLoggerTest {
     assertEquals(WORKFLOW_DELETE_ID, auditLogPayload.get("actionId"));
     assertEquals(WORKFLOW_DELETE_MESSAGE, auditLogPayload.get("message"));
     assertEquals(resources, auditLogPayload.get("resources"));
+    assertEquals(Collections.singletonList(WorkflowRole.ADMIN), auditLogPayload.get("requiredGroupsForAction"));
   }
 
   @Test
@@ -123,13 +139,14 @@ public class AuditLoggerTest {
     assertEquals(WORKFLOW_RUN_ID, auditLogPayload.get("actionId"));
     assertEquals(WORKFLOW_RUN_MESSAGE, auditLogPayload.get("message"));
     assertEquals(resources, auditLogPayload.get("resources"));
+    assertEquals(Arrays.asList(WorkflowRole.CREATOR, WorkflowRole.ADMIN), auditLogPayload.get("requiredGroupsForAction"));
   }
 
   @Test
   void testInvalidUserGivenToAuditEvents() {
     String emptyUser = "";
     Assertions.assertThrows(IllegalArgumentException.class, () -> {
-      new AuditEvents(emptyUser);
+      new AuditEvents(emptyUser, USER_IP, USER_AGENT, USER_AUTHORIZED_GROUP);
     });
   }
 }

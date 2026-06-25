@@ -1,4 +1,4 @@
-openapi: 3.0.1
+openapi: 3.1.0
 info:
   title: Workflow Service API
   description: "Workflow Service API is a wrapper API on existing orchestrator services\
@@ -64,8 +64,20 @@ paths:
         schema:
           type: string
       responses:
-        "500":
-          description: Internal Server Error
+        "200":
+          description: Workflow execution detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowRunResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "401":
+          description: Unauthorized
           content:
             application/json:
               schema:
@@ -76,8 +88,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
         "409":
           description: A Workflow with the given name already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "500":
+          description: Internal Server Error
           content:
             application/json:
               schema:
@@ -90,30 +114,6 @@ paths:
                 $ref: "#/components/schemas/AppError"
         "503":
           description: Service Unavailable
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "400":
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "200":
-          description: Workflow execution detail
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WorkflowRunResponse"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "404":
-          description: Not Found
           content:
             application/json:
               schema:
@@ -150,8 +150,20 @@ paths:
               $ref: "#/components/schemas/UpdateWorkflowRunRequest"
         required: true
       responses:
-        "500":
-          description: Internal Server Error
+        "200":
+          description: Workflow updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowRunResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "401":
+          description: Unauthorized
           content:
             application/json:
               schema:
@@ -162,8 +174,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
         "409":
           description: A Workflow with the given name already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "500":
+          description: Internal Server Error
           content:
             application/json:
               schema:
@@ -176,30 +200,6 @@ paths:
                 $ref: "#/components/schemas/AppError"
         "503":
           description: Service Unavailable
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "400":
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "200":
-          description: Workflow updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WorkflowRunResponse"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "404":
-          description: Not Found
           content:
             application/json:
               schema:
@@ -226,58 +226,58 @@ paths:
         schema:
           type: string
       responses:
-        "500":
-          description: Internal Server Error
+        "200":
+          description: List of all the workflows
           content:
-            '*/*':
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowMetadata"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
         "403":
           description: User not authorized to perform the action.
           content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "409":
-          description: A Workflow with the given name already exists.
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "502":
-          description: Bad Gateway
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "503":
-          description: Service Unavailable
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "400":
-          description: Bad Request
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "200":
-          description: List of all the workflows
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/WorkflowMetadata"
-        "401":
-          description: Unauthorized
-          content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
         "404":
           description: Not Found
           content:
-            '*/*':
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "409":
+          description: A Workflow with the given name already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "502":
+          description: Bad Gateway
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
       security:
@@ -306,58 +306,58 @@ paths:
                 $ref: "#/components/examples/ExternalWorkflowExample"
         required: true
       responses:
-        "500":
-          description: Internal Server Error
+        "200":
+          description: Workflow created | updated successfully
           content:
-            '*/*':
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowMetadata"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
         "403":
           description: User not authorized to perform the action.
           content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "409":
-          description: A Workflow with the given name already exists.
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "502":
-          description: Bad Gateway
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "503":
-          description: Service Unavailable
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "400":
-          description: Bad Request
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "200":
-          description: Workflow created | updated successfully
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/WorkflowMetadata"
-        "401":
-          description: Unauthorized
-          content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
         "404":
           description: Not Found
           content:
-            '*/*':
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "409":
+          description: A Workflow with the given name already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "502":
+          description: Bad Gateway
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
       security:
@@ -395,36 +395,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WorkflowRun"
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "403":
-          description: User not authorized to perform the action.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "409":
-          description: A Workflow with the given name already exists.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "502":
-          description: Bad Gateway
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "503":
-          description: Service Unavailable
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
         "400":
           description: Bad Request
           content:
@@ -437,8 +407,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
+        "403":
+          description: User not authorized to perform the action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
         "404":
           description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "409":
+          description: A Workflow with the given name already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "502":
+          description: Bad Gateway
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "503":
+          description: Service Unavailable
           content:
             application/json:
               schema:
@@ -470,42 +470,12 @@ paths:
               $ref: "#/components/schemas/TriggerWorkflowRequest"
         required: true
       responses:
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "403":
-          description: User not authorized to perform the action.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "409":
-          description: A Workflow with the given name already exists.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
         "200":
           description: Workflow successully triggered
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/WorkflowRunResponse"
-        "502":
-          description: Bad Gateway
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "503":
-          description: Service Unavailable
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
         "400":
           description: Bad Request
           content:
@@ -518,8 +488,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
+        "403":
+          description: User not authorized to perform the action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
         "404":
           description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "409":
+          description: A Workflow with the given name already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "502":
+          description: Bad Gateway
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "503":
+          description: Service Unavailable
           content:
             application/json:
               schema:
@@ -548,58 +548,58 @@ paths:
               $ref: "#/components/schemas/CreateWorkflowRequest"
         required: true
       responses:
-        "500":
-          description: Internal Server Error
+        "200":
+          description: Workflow created | updated successfully
           content:
-            '*/*':
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowMetadata"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
         "403":
           description: User not authorized to perform the action.
           content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "409":
-          description: A Workflow with the given name already exists.
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "502":
-          description: Bad Gateway
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "503":
-          description: Service Unavailable
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "400":
-          description: Bad Request
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "200":
-          description: Workflow created | updated successfully
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/WorkflowMetadata"
-        "401":
-          description: Unauthorized
-          content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
         "404":
           description: Not Found
           content:
-            '*/*':
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "409":
+          description: A Workflow with the given name already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "502":
+          description: Bad Gateway
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
       security:
@@ -624,8 +624,20 @@ paths:
         schema:
           type: string
       responses:
-        "500":
-          description: Internal Server Error
+        "200":
+          description: Workflow Details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowMetadata"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "401":
+          description: Unauthorized
           content:
             application/json:
               schema:
@@ -636,8 +648,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
         "409":
           description: A Workflow with the given name already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "500":
+          description: Internal Server Error
           content:
             application/json:
               schema:
@@ -650,30 +674,6 @@ paths:
                 $ref: "#/components/schemas/AppError"
         "503":
           description: Service Unavailable
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "400":
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "200":
-          description: Workflow Details
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WorkflowMetadata"
-        "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "404":
-          description: Not Found
           content:
             application/json:
               schema:
@@ -699,54 +699,54 @@ paths:
         schema:
           type: string
       responses:
-        "500":
-          description: Internal Server Error
+        "204":
+          description: Workflow deleted successfully.
+        "400":
+          description: Bad Request
           content:
-            '*/*':
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
         "403":
           description: User not authorized to perform the action.
           content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "409":
-          description: A Workflow with the given name already exists.
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "502":
-          description: Bad Gateway
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "503":
-          description: Service Unavailable
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "400":
-          description: Bad Request
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "204":
-          description: Workflow deleted successfully.
-        "401":
-          description: Unauthorized
-          content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
         "404":
           description: Not Found
           content:
-            '*/*':
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "409":
+          description: A Workflow with the given name already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "502":
+          description: Bad Gateway
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
       security:
@@ -777,30 +777,12 @@ paths:
         schema:
           type: string
       responses:
-        "500":
-          description: Internal Server Error
+        "200":
+          description: Workflow execution details of the latest task.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AppError"
-        "403":
-          description: User not authorized to perform the action.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "502":
-          description: Bad Gateway
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "503":
-          description: Service Unavailable
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
+                type: object
         "400":
           description: Bad Request
           content:
@@ -813,14 +795,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
-        "200":
-          description: Workflow execution details of the latest task.
+        "403":
+          description: User not authorized to perform the action.
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/AppError"
         "404":
           description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "502":
+          description: Bad Gateway
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "503":
+          description: Service Unavailable
           content:
             application/json:
               schema:
@@ -868,7 +868,7 @@ paths:
         "200":
           description: Workflow service is ready
           content:
-            '*/*':
+            application/json:
               schema:
                 type: string
   /liveness_check:
@@ -890,7 +890,7 @@ paths:
         "200":
           description: Workflow service is alive
           content:
-            '*/*':
+            application/json:
               schema:
                 type: string
   /v1/workflow/system/{workflow_name}:
@@ -913,54 +913,54 @@ paths:
         schema:
           type: string
       responses:
-        "500":
-          description: Internal Server Error
+        "204":
+          description: Workflow deleted successfully.
+        "400":
+          description: Bad Request
           content:
-            '*/*':
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
         "403":
           description: User not authorized to perform the action.
           content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "409":
-          description: A Workflow with the given name already exists.
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "502":
-          description: Bad Gateway
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "503":
-          description: Service Unavailable
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "400":
-          description: Bad Request
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "204":
-          description: Workflow deleted successfully.
-        "401":
-          description: Unauthorized
-          content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
         "404":
           description: Not Found
           content:
-            '*/*':
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "409":
+          description: A Workflow with the given name already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "502":
+          description: Bad Gateway
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
               schema:
                 $ref: "#/components/schemas/AppError"
       security:
@@ -979,16 +979,6 @@ components:
           - failed
           - success
           - queued
-    AppError:
-      type: object
-      properties:
-        code:
-          type: integer
-          format: int32
-        reason:
-          type: string
-        message:
-          type: string
     WorkflowRunResponse:
       type: object
       properties:
@@ -999,13 +989,13 @@ components:
           type: string
           description: Run id for the workflow
         startTimeStamp:
-          type: integer
+          type: string
+          format: int64
           description: Start timestamp of the workflow run.Epoch time stamp
-          format: int64
         endTimeStamp:
-          type: integer
-          description: End timestamp of the workflow run.Epoch timestamp
+          type: string
           format: int64
+          description: End timestamp of the workflow run.Epoch timestamp
         status:
           type: string
           description: Task execution status
@@ -1018,9 +1008,24 @@ components:
         submittedBy:
           type: string
           description: System captured user details which triggered the run
+    AppError:
+      type: object
+      description: Standard error response returned by OSDU services.
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: HTTP status code.
+          example: 400
+        reason:
+          type: string
+          description: Short error reason.
+          example: Bad Request
+        message:
+          type: string
+          description: Detailed error message.
+          example: Invalid record format.
     CreateWorkflowRequest:
-      required:
-      - registrationInstructions
       type: object
       properties:
         workflowName:
@@ -1034,18 +1039,14 @@ components:
           type: object
           additionalProperties:
             type: object
-            description: |-
-              Workfow registration instructions which could contains:
-
-              Name of already registered Airflow DAG
-              Content of python DAG file
-              etc By default this is Airflow DAG named workflowName
           description: |-
             Workfow registration instructions which could contains:
 
             Name of already registered Airflow DAG
             Content of python DAG file
             etc By default this is Airflow DAG named workflowName
+      required:
+      - registrationInstructions
     WorkflowMetadata:
       type: object
       properties:
@@ -1063,14 +1064,14 @@ components:
           type: string
           description: System captured user info who created workflow.
         creationTimestamp:
-          type: integer
-          description: System date of creation of workflow.Epoch tiemstamp.
+          type: string
           format: int64
+          description: System date of creation of workflow.Epoch tiemstamp.
         version:
-          type: integer
+          type: string
+          format: int32
           description: Sematic versions of workflow. These numbers are assigned in
             increasing order and correspond to edits\modifications to workflow definitions.
-          format: int32
         isDeployedThroughWorkflowService:
           type: boolean
           writeOnly: true
@@ -1078,12 +1079,6 @@ components:
           type: object
           additionalProperties:
             type: object
-            description: |-
-              Workfow registration instructions which could contains:
-
-              Name of already registered Airflow DAG
-              Cotent of python DAG file
-              etc By default this is Airflow DAG named workflowName
           description: |-
             Workfow registration instructions which could contains:
 
@@ -1103,10 +1098,10 @@ components:
           type: object
           additionalProperties:
             type: object
-            description: Map to configure workflow speciffic key value pairs
           description: Map to configure workflow speciffic key value pairs
     WorkflowRun:
       type: object
+      description: Reperesent one workflow run.
       properties:
         workflowId:
           type: string
@@ -1118,13 +1113,13 @@ components:
           type: string
           description: Run id for the workflow
         startTimeStamp:
-          type: integer
+          type: string
+          format: int64
           description: Start timestamp of the workflow run.Epoch time stamp
-          format: int64
         endTimeStamp:
-          type: integer
-          description: End timestamp of the workflow run.Epoch timestamp
+          type: string
           format: int64
+          description: End timestamp of the workflow run.Epoch timestamp
         status:
           type: string
           description: Task execution status
@@ -1140,60 +1135,91 @@ components:
           description: System captured user details which triggered the run.
         workflowEngineExecutionDate:
           type: string
-      description: Reperesent one workflow run.
     ConnectedOuterService:
       type: object
+      description: Name and version of an external service that this OSDU service
+        connects to.
       properties:
         name:
           type: string
+          description: Name of the connected external service.
+          example: storage
         version:
           type: string
+          description: Version of the connected external service.
+          example: 2.0.0
     FeatureFlagState:
       type: object
+      description: State of a feature flag for a given partition and source.
       properties:
         name:
           type: string
+          description: Name of the feature flag.
+          example: collaborations-api
         enabled:
           type: boolean
+          description: Whether the feature flag is currently enabled.
+          example: true
         partition:
           type: string
+          description: Data partition this flag applies to.
+          example: opendes
         source:
           type: string
+          description: Source configuration that provided this flag state.
+          example: runtime
     VersionInfo:
       type: object
+      description: Version and build information for an OSDU service.
       properties:
         groupId:
           type: string
+          description: Maven group ID of the service artifact.
+          example: org.opengroup.osdu
         artifactId:
           type: string
+          description: Maven artifact ID of the service.
+          example: os-search
         version:
           type: string
+          description: Semantic version of the deployed service.
+          example: 0.27.0
         buildTime:
           type: string
+          description: ISO 8601 timestamp of the build.
+          example: 2021-01-26T02:24:13.843Z
         branch:
           type: string
+          description: Source control branch from which the service was built.
+          example: main
         commitId:
           type: string
+          description: Short commit SHA of the build.
+          example: "7777777"
         commitMessage:
           type: string
+          description: Commit message of the build.
+          example: initial commit
         connectedOuterServices:
           type: array
+          description: List of external services this service depends on.
           items:
             $ref: "#/components/schemas/ConnectedOuterService"
         featureFlagStates:
           type: array
+          description: "Current feature flag states for this partition, if any."
           items:
             $ref: "#/components/schemas/FeatureFlagState"
   examples:
     ExternalWorkflowExample:
       value:
-        workflowName: external_airflow_example
+        registrationInstructions:
+          externalAirflowSecret: external_airflow_secret
+          dagName: airflow_monitoring
         description: "This is an example of creating a workflow that executes on external\
           \ Airflow. Configuration should be provided via Secret service. Details\
           \ in the README: https://community.opengroup.org/osdu/platform/data-flow/ingestion/ingestion-workflow/-/tree/master#external-airflow-support"
-        registrationInstructions:
-          dagName: airflow_monitoring
-          externalAirflowSecret: external_airflow_secret
+        workflowName: external_airflow_example
   securitySchemes:
     Authorization:
       type: http

@@ -19,10 +19,12 @@ package org.opengroup.osdu.workflow.logging;
 
 import java.util.List;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
 import org.opengroup.osdu.core.common.logging.audit.AuditPayload;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
+import org.opengroup.osdu.core.common.util.IpAddressUtil;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
@@ -33,12 +35,16 @@ import org.springframework.web.context.annotation.RequestScope;
 public class AuditLogger {
 	private final JaxRsDpsLog logger;
 	private final DpsHeaders headers;
+	private final HttpServletRequest httpServletRequest;
 
   private AuditEvents events = null;
 
   private AuditEvents getAuditEvents() {
     if (this.events == null) {
-      this.events = new AuditEvents(this.headers.getUserEmail());
+      String userIpAddress = IpAddressUtil.getClientIpAddress(httpServletRequest);
+      String userAgent = httpServletRequest.getHeader("user-agent");
+      String userAuthorizedGroupName = headers.getUserAuthorizedGroupName();
+      this.events = new AuditEvents(this.headers.getUserEmail(), userIpAddress, userAgent, userAuthorizedGroupName);
     }
     return this.events;
   }

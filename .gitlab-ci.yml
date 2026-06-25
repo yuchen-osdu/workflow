@@ -1,4 +1,5 @@
 variables:
+  CORE_BUILD_SUBDIR: workflow-core
 
   AWS_BUILD_SUBDIR: provider/workflow-aws/build-aws
   AWS_TEST_SUBDIR: testing/workflow-test-aws
