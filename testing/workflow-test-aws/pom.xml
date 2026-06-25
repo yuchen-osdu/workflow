@@ -34,12 +34,10 @@
   <description>AWS implementation of test project for workflow service</description>
 
   <properties>
-    <maven.compiler.target>17</maven.compiler.target>
-    <maven.compiler.source>17</maven.compiler.source>
     <spring-boot.version>2.2.2.RELEASE</spring-boot.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.main.basedir>${project.basedir}</project.main.basedir>
-    <junit-jupiter.version>5.5.2</junit-jupiter.version>
+    <junit-jupiter.version>5.12.2</junit-jupiter.version>
     <jackson-databind.version>2.13.2.2</jackson-databind.version>
     <jackson.version>2.13.2</jackson.version>
     <awsv2.version>2.30.32</awsv2.version>

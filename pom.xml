@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.3.7</version>
+    <version>3.5.14</version>
     <relativePath/>
   </parent>
 
@@ -38,17 +38,20 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>17</java.version>
-    <org.mapstruct.version>1.3.1.Final</org.mapstruct.version>
-    <maven-surefire-plugin.version>3.0.0-M4</maven-surefire-plugin.version>
-    <os-core-common.version>3.5.1</os-core-common.version>
-    <openapi.version>2.5.0</openapi.version>
-    <json-smart.version>2.5.2</json-smart.version>
-    <jackson-databind.version>2.17.1</jackson-databind.version>
-    <spring-framework-version>6.1.16</spring-framework-version>
-    <spring-boot.version>3.3.7</spring-boot.version>
-    <spring-security.version>6.3.4</spring-security.version>
-    <maven.compiler.target>17</maven.compiler.target>
-    <maven.compiler.source>17</maven.compiler.source>
+    <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
+    <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
+    <os-core-common.version>7.1.0</os-core-common.version>
+    <openapi.version>2.8.16</openapi.version>
+    <swagger-core.version>2.2.45</swagger-core.version>
+    <json-smart.version>2.6.0</json-smart.version>
+    <spring-framework.version>6.2.18</spring-framework.version>
+    <spring-boot.version>3.5.14</spring-boot.version>
+    <spring-security.version>6.5.10</spring-security.version>
+    <maven.compiler.release>17</maven.compiler.release>
+    <!-- os-core-common 7.0.0 declares lettuce-core as provided; CVE-2025-58057 requires >= 7.5.2.RELEASE -->
+    <lettuce.version>7.5.2.RELEASE</lettuce.version>
+    <!-- lettuce-core 7.x requires Netty 4.2+; Spring Boot 3.5.14 provides 4.1.x -->
+    <netty.version>4.2.14.Final</netty.version>
   </properties>
 
   <licenses>
@@ -60,11 +63,26 @@
   </licenses>
 
   <dependencyManagement>
+    <!-- BOMs listed in import-order precedence (Maven's "first declared wins" rule for BOMs):
+      netty-bom first so it overrides Spring Boot's Netty 4.1.x with the 4.2.x line lettuce-core 7.5.2 requires (CVE-2025-58057 et al),
+      spring-boot-dependencies second as the parent BOM providing default dependency management
+      (Spring Boot 3.5.13+ already ships jackson-bom 2.21.2 natively),
+      spring-security-bom third as it may override Spring Framework versions for security,
+      spring-framework-bom fourth as it provides core dependencies,
+      os-core-common last as it provides OSDU-specific dependency defaults.
+    -->
     <dependencies>
       <dependency>
-        <groupId>org.springframework</groupId>
-        <artifactId>spring-framework-bom</artifactId>
-        <version>${spring-framework-version}</version>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-bom</artifactId>
+        <version>${netty.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring-boot.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -76,16 +94,54 @@
         <scope>import</scope>
       </dependency>
       <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-framework-bom</artifactId>
+        <version>${spring-framework.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.opengroup.osdu</groupId>
+        <artifactId>os-core-common</artifactId>
+        <version>${os-core-common.version}</version>
+      </dependency>
+      <!-- Align swagger-core.v3 across os-core-common and springdoc to avoid mixed versions.
+           Without this, providers pull swagger-core 2.2.43 transitively from os-core-common,
+           causing the "##default" sentinel to leak into the generated OpenAPI spec. -->
+      <dependency>
+        <groupId>io.swagger.core.v3</groupId>
+        <artifactId>swagger-core-jakarta</artifactId>
+        <version>${swagger-core.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.swagger.core.v3</groupId>
+        <artifactId>swagger-models-jakarta</artifactId>
+        <version>${swagger-core.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.swagger.core.v3</groupId>
+        <artifactId>swagger-annotations-jakarta</artifactId>
+        <version>${swagger-core.version}</version>
+      </dependency>
+      <dependency>
         <groupId>net.minidev</groupId>
         <artifactId>json-smart</artifactId>
         <version>${json-smart.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-dependencies</artifactId>
-        <version>${spring-boot.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
+          <groupId>org.opengroup.osdu</groupId>
+          <artifactId>workflow-core</artifactId>
+          <version>${parent.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>org.jsoup</groupId>
+          <artifactId>jsoup</artifactId>
+          <version>1.17.2</version>
+      </dependency>
+      <dependency>
+          <groupId>io.lettuce</groupId>
+          <artifactId>lettuce-core</artifactId>
+          <version>${lettuce.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -106,26 +162,11 @@
     <dependency>
       <groupId>org.opengroup.osdu</groupId>
       <artifactId>os-core-common</artifactId>
-      <version>${os-core-common.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.elasticsearch</groupId>
-          <artifactId>elasticsearch</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.elasticsearch.client</groupId>
-          <artifactId>elasticsearch-rest-client</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.elasticsearch.client</groupId>
-          <artifactId>elasticsearch-rest-high-level-client</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-all</artifactId>
-      <version>4.1.118.Final</version>
+      <version>${netty.version}</version>
       <exclusions>
         <exclusion>
           <groupId>io.netty</groupId>
@@ -148,7 +189,7 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-handler</artifactId>
-      <version>4.1.118.Final</version>
+      <version>${netty.version}</version>
       <exclusions>
         <exclusion>
           <groupId>io.netty</groupId>
@@ -163,7 +204,7 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-codec</artifactId>
-      <version>4.1.118.Final</version>
+      <version>${netty.version}</version>
       <exclusions>
         <exclusion>
           <groupId>io.netty</groupId>
@@ -174,7 +215,7 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-common</artifactId>
-      <version>4.1.118.Final</version>
+      <version>${netty.version}</version>
     </dependency>
     <dependency>
       <groupId>com.sun.jersey</groupId>
@@ -258,12 +299,10 @@
     <dependency>
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
-      <version>2.0</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-web</artifactId>
-      <version>${spring-security.version}</version>
     </dependency>
     <dependency>
       <groupId>org.json</groupId>
@@ -283,8 +322,7 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <configuration>
-            <source>${maven.compiler.source}</source>
-            <target>${maven.compiler.target}</target>
+            <release>17</release>
             <annotationProcessorPaths>
               <path>
                 <groupId>org.springframework.boot</groupId>
@@ -379,7 +417,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.4</version>
+        <version>0.8.13</version>
         <executions>
           <execution>
             <goals>
