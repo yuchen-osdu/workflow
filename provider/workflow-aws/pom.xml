@@ -33,45 +33,14 @@
   <properties>
     <aws.sdk.version>2.25.11</aws.sdk.version>
     <log4j2.version>2.17.1</log4j2.version>
-    <tomcat.version>10.1.48</tomcat.version>
-    <spring-core.version>6.2.11</spring-core.version>
   </properties>
 
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>org.springframework</groupId>
-        <artifactId>spring-core</artifactId>
-        <version>${spring-core.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.netty</groupId>
-        <artifactId>netty-codec-http2</artifactId>
-        <version>${netty.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.tomcat.embed</groupId>
-        <artifactId>tomcat-embed-core</artifactId>
-        <version>${tomcat.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.netty</groupId>
-        <artifactId>netty-common</artifactId>
-        <version>${netty.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.netty</groupId>
-        <artifactId>netty-codec-smtp</artifactId>
-        <version>${netty.version}</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
   <dependencies>
     <!-- Internal packages -->
     <dependency>
       <groupId>org.opengroup.osdu.core.aws</groupId>
       <artifactId>os-core-lib-aws</artifactId>
-      <version>6.0.0</version>
+      <version>8.0.3</version>
     </dependency>
         <!-- os-core-common 7.x declares lettuce-core as provided (CVE-2025-58057); declare
              it here so os-core-lib-aws's CacheFactory.getRedisCache resolves io.lettuce.core.RedisException -->
@@ -113,7 +82,6 @@
     <dependency>
       <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-crypto</artifactId>
-      <version>6.3.8</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.security</groupId>
