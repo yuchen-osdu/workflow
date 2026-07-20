@@ -1,0 +1,26 @@
+{
+  "dag_id": "csv_ingestion",
+  "duration": 5.988733,
+  "end_date": "2023-03-07T01:50:05.126812+00:00",
+  "execution_date": "2023-03-07T01:33:51.353004+00:00",
+  "executor_config": "{}",
+  "hostname": "airflow-worker-kkgwb",
+  "max_tries": 1,
+  "operator": "UpdateStatusOperator",
+  "pid": 406,
+  "pool": "default_pool",
+  "pool_slots": 1,
+  "priority_weight": 1,
+  "queue": "default",
+  "queued_when": "2023-03-07T01:49:51.677988+00:00",
+  "sla_miss": null,
+  "start_date": "2023-03-07T01:49:59.138079+00:00",
+  "state": "failed",
+  "task_id": "update_status_finished",
+  "try_number": 2,
+  "unixname": "airflow",
+  "xcom": {
+    "saved_record_ids": "{'process_single_manifest_file_task': ['osdu:master-data--ActivityTemplate:CSDJ-ActivityTemplate-GC']}",
+    "skipped_ids": "{}"
+  }
+}

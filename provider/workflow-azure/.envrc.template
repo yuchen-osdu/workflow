@@ -1,0 +1,30 @@
+##
+# Needed to run the service
+##
+export LOG_PREFIX=
+export entitlements_service_endpoint=
+export entitlements_service_api_key=
+export azure.activedirectory.session-stateless=
+export aad_client_id=
+export azure.activedirectory.AppIdUri=
+export cosmosdb_database=
+export KEYVAULT_URI=
+export AZURE_CLIENT_ID=
+export AZURE_TENANT_ID=
+export AZURE_CLIENT_SECRET=
+export appinsights_key=
+export airflow_url=
+export airflow_username=
+export airflow_password=
+
+
+##
+# Needed to run the integration tests
+##
+export INTEGRATION_TESTER=
+export MY_TENANT=
+export AZURE_TESTER_SERVICEPRINCIPAL_SECRET=
+export AZURE_AD_TENANT_ID=
+export AZURE_AD_APP_RESOURCE_ID=
+export HOST_URL=
+export ENTITLEMENT_URL=

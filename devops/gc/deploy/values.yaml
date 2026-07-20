@@ -1,0 +1,89 @@
+# Default values for workflow-deploy.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+global:
+  domain: ""
+  dataPartitionId: ""
+  limitsEnabled: true
+  tier: ""
+  autoscalingMode: "cpu"
+  otelJavaagentEnabled: "true"
+
+data:
+  #Configmap variables
+  logLevel: "ERROR"
+  partitionHost: "http://partition"
+  entitlementsHost: "http://entitlements"
+  schemaHost: "http://schema"
+  legalHost: "http://legal"
+  osduAirflowUrl: "http://airflow:8080"
+  workflowHost: "http://workflow"
+  otelExporterEndpoint: "http://opentelemetry-collector.opentelemetry.svc.cluster.local:4318"
+  dagNames:
+    - csv_ingestion
+    - manifest_ingestion
+    - Osdu_ingest
+    - Segy_to_vds_conversion_sdms
+    - Segy_to_zgy_conversion
+    - Osdu_ingest_by_reference
+    - segy_to_mdio_conversion
+    - Energyml_Converter
+    - Energyml_Delivery
+    - eds_ingest
+    - eds_naturalization
+    - eds_scheduler
+  # Deployment variables
+  requestsCpu: "60m"
+  requestsMemory: "350Mi"
+  limitsCpu: "1"
+  limitsMemory: "3G"
+  serviceAccountName: "workflow"
+  bootstrapImage: ""
+  bootstrapServiceAccountName: "datafier"
+  image: ""
+  imagePullPolicy: "IfNotPresent"
+  affinityLabelsSpot:
+    cloud.google.com/gke-provisioning:
+      - spot
+  affinityLabelsStandard:
+    cloud.google.com/gke-provisioning:
+      - standard
+
+conf:
+  configmap: "workflow-config"
+  appName: "workflow"
+
+istio:
+  proxyCPU: "5m"
+  proxyCPULimit: "200m"
+  proxyMemory: "50Mi"
+  proxyMemoryLimit: "256Mi"
+  bootstrapProxyCPU: "5m"
+  bootstrapProxyCPULimit: "50m"
+
+hpa:
+  minReplicas: 1
+  maxReplicas: 6
+  cpu:
+    utilization: 200
+    scaleUpStabilizationWindowSeconds: 30
+    scaleUpValue: 200
+    scaleUpPeriod: 15
+    scaleDownStabilizationWindowSeconds: 150
+    scaleDownValue: 100
+    scaleDownPeriod: 15
+  requests:
+    targetType: "AverageValue"
+    targetValue: 140
+    scaleUpStabilizationWindowSeconds: 10
+    scaleUpValue: 50
+    scaleUpPeriod: 15
+    scaleDownStabilizationWindowSeconds: 60
+    scaleDownValue: 25
+    scaleDownPeriod: 60
+
+limits:
+  maxTokens: 80
+  tokensPerFill: 80
+  fillInterval: "1s"

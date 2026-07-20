@@ -1,0 +1,56 @@
+{
+    "executionContext": {
+        "acl": {
+            "owners": [
+                "data.default.owners@{{data_partition_id}}.group"
+            ],
+            "viewers": [
+                "data.default.viewers@{{data_partition_id}}.group"
+            ]
+        },
+        "legal": {
+            "legaltags": [
+                "{{data_partition_id}}-demo-legaltag"
+            ],
+            "otherRelevantDataCountries": [
+                "US"
+            ]
+        },
+        "Payload": {
+            "AppKey": "gc-app",
+            "data-partition-id": "{{data_partition_id}}"
+        },
+        "manifest": {
+            "kind": "osdu:wks:Manifest:1.0.0",
+            "MasterData": [
+                {
+                    "id": "{{data_partition_id}}:reference-data--AliasNameType:EDSConnectedSourceIdentifier",
+                    "kind": "osdu:wks:reference-data--AliasNameType:1.0.0",
+                    "acl": {
+                        "owners": [
+                            "data.default.owners@{{data_partition_id}}.group"
+                        ],
+                        "viewers": [
+                            "data.default.viewers@{{data_partition_id}}.group"
+                        ]
+                    },
+                    "legal": {
+                        "legaltags": [
+                            "{{data_partition_id}}-demo-legaltag"
+                        ],
+                        "otherRelevantDataCountries": [
+                            "US"
+                        ],
+                        "status": "compliant"
+                    },
+                    "data": {
+                        "Description": "AliasName for EDSConnectedSourceIdentifier",
+                        "Name": "GC",
+                        "SourceOrganisationID": "{{data_partition_id}}:master-data--Organisation:GC:",
+                        "Code": "EDSConnectedSourceIdentifier"
+                    }
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,26 @@
+variables:
+  CIMPL_SERVICE: workflow
+  CIMPL_ENABLE_BOOTSTRAP: "true"
+  DISABLE_INTEGRATION_TEST: true
+
+cimpl-acceptance-test:
+  variables:
+    EXTERNAL_AIRFLOW_TESTS_ENABLED: "true"
+    TEST_DAG_NAME_EXTERNAL_AIRFLOW: "airflow_monitoring"
+    EXTERNAL_AIRFLOW_SECRET: "airflow-workflow-tests"
+
+#dev2 jobs
+
+cimpl-dev2-acceptance-test:
+  variables:
+    EXTERNAL_AIRFLOW_TESTS_ENABLED: "true"
+    TEST_DAG_NAME_EXTERNAL_AIRFLOW: "airflow_monitoring"
+    EXTERNAL_AIRFLOW_SECRET: "airflow-workflow-tests"
+
+#standby (Blue-Green) jobs
+
+cimpl-standby-acceptance-test:
+  variables:
+    EXTERNAL_AIRFLOW_TESTS_ENABLED: "true"
+    TEST_DAG_NAME_EXTERNAL_AIRFLOW: "airflow_monitoring"
+    EXTERNAL_AIRFLOW_SECRET: "airflow-workflow-tests"

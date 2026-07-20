@@ -1,0 +1,103 @@
+{
+    "executionContext": {
+        "acl": {
+            "owners": [
+                "data.default.owners@{{data_partition_id}}.group"
+            ],
+            "viewers": [
+                "data.default.viewers@{{data_partition_id}}.group"
+            ]
+        },
+        "legal": {
+            "legaltags": [
+                "{{data_partition_id}}-demo-legaltag"
+            ],
+            "otherRelevantDataCountries": [
+                "US"
+            ]
+        },
+        "Payload": {
+            "AppKey": "gc-app",
+            "data-partition-id": "{{data_partition_id}}"
+        },
+        "manifest": {
+            "kind": "osdu:wks:Manifest:1.0.0",
+            "MasterData": [
+                {
+                    "id": "{{data_partition_id}}:master-data--ConnectedSourceDataJob:GC-M20TestWPC",
+                    "kind": "osdu:wks:master-data--ConnectedSourceDataJob:1.3.0",
+                    "acl": {
+                        "owners": [
+                            "data.default.owners@{{data_partition_id}}.group"
+                        ],
+                        "viewers": [
+                            "data.default.viewers@{{data_partition_id}}.group"
+                        ]
+                    },
+                    "legal": {
+                        "legaltags": [
+                            "{{data_partition_id}}-demo-legaltag"
+                        ],
+                        "otherRelevantDataCountries": [
+                            "US"
+                        ]
+                    },
+                    "data": {
+                        "ActivityTemplateID": "{{data_partition_id}}:master-data--ActivityTemplate:CSDJ-ActivityTemplate-GC:",
+                        "FailedRecords": [],
+                        "ScheduleUTC": "36 08 * * *",
+                        "LimitRecords": 2,
+                        "Name": "GC",
+                        "OnIngestionLegalTags.otherRelevantDataCountries": [
+                            "US"
+                        ],
+                        "ActiveIndicator": true,
+                        "VirtualProperties.DefaultName": "GC",
+                        "VersionCreationReason": "",
+                        "OnIngestionAcl.viewers": [
+                            "data.default.viewers@{{data_partition_id}}.group"
+                        ],
+                        "ConnectedSourceDataPartitionID": "{{data_partition_id}}",
+                        "OnIngestionDataPartitionID": "osdu",
+                        "OnIngestionSchemaAuthority": "osdu",
+                        "FetchKind": "osdu:wks:work-product-component--WellLog:1.0.0",
+                        "OnIngestionLegalTags.legaltags": [
+                            "{{data_partition_id}}-demo-legaltag"
+                        ],
+                        "OnIngestionAcl.owners": [
+                            "data.default.owners@{{data_partition_id}}.group"
+                        ],
+                        "ConnectedSourceRegistryEntryID": "{{data_partition_id}}:master-data--ConnectedSourceRegistryEntry:GCTest:",
+                        "Filter": "data.Name:7209_k1503_1975_comp.las",
+                        "Parameters": [
+                            {
+                                "StringParameter": "osdu",
+                                "ParameterRoleID": "{{data_partition_id}}:reference-data--ParameterRole:Input:",
+                                "Title": "ConnectedSourceSchemaAuthority",
+                                "ParameterKindID": "{{data_partition_id}}:reference-data--ParameterKind:String:"
+                            },
+                            {
+                                "StringParameter": "2020-02-01T00:00:00Z",
+                                "ParameterRoleID": "{{data_partition_id}}:reference-data--ParameterRole:Input:",
+                                "Title": "FetchStartDateTime",
+                                "ParameterKindID": "{{data_partition_id}}:reference-data--ParameterKind:String:"
+                            },
+                            {
+                                "StringParameter": "",
+                                "ParameterRoleID": "{{data_partition_id}}:reference-data--ParameterRole:Input:",
+                                "Title": "FetchEndDateTime",
+                                "ParameterKindID": "{{data_partition_id}}:reference-data--ParameterKind:String:"
+                            },
+                            {
+                                "Title": "ParentDataMappingDummyMasterid",
+                                "StringParameter": "master-data--Wellbore:ParentDataMapping-DummyWell",
+                                "ParameterKindID": "{{data_partition_id}}:reference-data--ParameterKind:String:",
+                                "ParameterRoleID": "{{data_partition_id}}:reference-data--ParameterRole:Input:"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+}

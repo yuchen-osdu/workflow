@@ -1,0 +1,39 @@
+{
+  "instrumentations": [
+    {
+      "entityType": "org.opengroup.osdu.workflow.model.WorkflowMetadata",
+      "fieldNameCustomMapping": {
+      },
+      "fieldTypeCustomMapping": {
+        "creationTimestamp": "shaded.osm.com.google.cloud.Timestamp"
+      },
+      "identityTranslator": {
+        "getIdMethod": "getWorkflowId",
+        "setIdMethod": "setWorkflowId",
+        "keyClass": "java.lang.String"
+      },
+      "keyFields": [
+        "workflowId"
+      ]
+    },
+    {
+      "entityType": "org.opengroup.osdu.workflow.model.WorkflowRun",
+      "fieldNameCustomMapping": {
+      },
+      "fieldTypeCustomMapping": {
+        "startTimeStamp": "shaded.osm.com.google.cloud.Timestamp",
+        "endTimeStamp": "shaded.osm.com.google.cloud.Timestamp"
+      },
+      "identityTranslator": {
+        "getIdMethod": "getRunId",
+        "setIdMethod": "setRunId",
+        "keyClass": "java.lang.String"
+      },
+      "keyFields": [
+        "runId"
+      ]
+    }
+  ]
+}
+
+

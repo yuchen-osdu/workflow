@@ -1,0 +1,92 @@
+{
+    "executionContext": {
+        "acl": {
+            "owners": [
+                "data.default.owners@{{data_partition_id}}.group"
+            ],
+            "viewers": [
+                "data.default.viewers@{{data_partition_id}}.group"
+            ]
+        },
+        "legal": {
+            "legaltags": [
+                "{{data_partition_id}}-demo-legaltag"
+            ],
+            "otherRelevantDataCountries": [
+                "US"
+            ]
+        },
+        "Payload": {
+            "AppKey": "gc-app",
+            "data-partition-id": "{{data_partition_id}}"
+        },
+        "manifest": {
+            "kind": "osdu:wks:Manifest:1.0.0",
+            "MasterData": [
+                {
+                    "id": "{{data_partition_id}}:master-data--ActivityTemplate:CSRE-ActivityTemplate-GC",
+                    "kind": "osdu:wks:master-data--ActivityTemplate:1.0.0",
+                    "acl": {
+                        "owners": [
+                            "data.default.owners@{{data_partition_id}}.group"
+                        ],
+                        "viewers": [
+                            "data.default.viewers@{{data_partition_id}}.group"
+                        ]
+                    },
+                    "legal": {
+                        "legaltags": [
+                            "{{data_partition_id}}-demo-legaltag"
+                        ],
+                        "otherRelevantDataCountries": [
+                            "US"
+                        ],
+                        "status": "compliant"
+                    },
+                    "version": 1651665793168042,
+                    "data": {
+                        "Name": "ConnectedSourceRegistryEntry ActivityTemplate",
+                        "Description": "The activity parameter definition for a ConnectedSourceRegistryEntry.",
+                        "Source": "Example ",
+                        "ExistenceKind": "{{data_partition_id}}:reference-data--ExistenceKind:Prototype:",
+                        "VersionCreationReason": "Demonstrate ConnectedSourceRegistryEntry ActivityTemplate",
+                        "Parameters": [
+                            {
+                                "Title": "DatasetURL",
+                                "AllowedParameterKind": "{{data_partition_id}}:reference-data--ParameterKind:String:",
+                                "IsInput": true,
+                                "IsOutput": false,
+                                "MaxOccurs": 1,
+                                "MinOccurs": 1,
+                                "DefaultValue": {
+                                    "Title": "DatasetURL",
+                                    "Selection": "Selected by default",
+                                    "StringParameter": "osdu",
+                                    "ParameterKindID": "{{data_partition_id}}:reference-data--ParameterKind:String:",
+                                    "ParameterRoleID": "{{data_partition_id}}:reference-data--ParameterRole:Input:"
+                                }
+                            },
+                             {
+                                "Title": "SearchURL",
+                                "AllowedParameterKind": "{{data_partition_id}}:reference-data--ParameterKind:String:",
+                                "IsInput": true,
+                                "IsOutput": false,
+                                "MaxOccurs": 1,
+                                "MinOccurs": 1,
+                                "DefaultValue": {
+                                    "Title": "SearchURL",
+                                    "Selection": "Selected by default",
+                                    "StringParameter": "osdu",
+                                    "ParameterKindID": "{{data_partition_id}}:reference-data--ParameterKind:String:",
+                                    "ParameterRoleID": "{{data_partition_id}}:reference-data--ParameterRole:Input:"
+                                }
+                            }
+                            
+                        ],
+                        "ExtensionProperties": {}
+                    }
+                }
+            ]
+        }
+    }
+}

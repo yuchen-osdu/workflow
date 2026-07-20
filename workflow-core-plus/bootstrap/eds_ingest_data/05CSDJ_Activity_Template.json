@@ -1,0 +1,121 @@
+{
+    "executionContext": {
+        "acl": {
+            "owners": [
+                "data.default.owners@{{data_partition_id}}.group"
+            ],
+            "viewers": [
+                "data.default.viewers@{{data_partition_id}}.group"
+            ]
+        },
+        "legal": {
+            "legaltags": [
+                "{{data_partition_id}}-demo-legaltag"
+            ],
+            "otherRelevantDataCountries": [
+                "US"
+            ]
+        },
+        "Payload": {
+            "AppKey": "gc-app",
+            "data-partition-id": "{{data_partition_id}}"
+        },
+        "manifest": {
+            "kind": "osdu:wks:Manifest:1.0.0",
+            "MasterData": [
+                {
+                    "id": "{{data_partition_id}}:master-data--ActivityTemplate:CSDJ-ActivityTemplate-GC",
+                    "kind": "osdu:wks:master-data--ActivityTemplate:1.0.0",
+                    "acl": {
+                        "owners": [
+                            "data.default.owners@{{data_partition_id}}.group"
+                        ],
+                        "viewers": [
+                            "data.default.viewers@{{data_partition_id}}.group"
+                        ]
+                    },
+                    "legal": {
+                        "legaltags": [
+                            "{{data_partition_id}}-demo-legaltag"
+                        ],
+                        "otherRelevantDataCountries": [
+                            "US"
+                        ],
+                        "status": "compliant"
+                    },
+                    "version": 1651665793168042,
+                    "data": {
+                        "Name": "ConnectedSourceDataJob ActivityTemplate",
+                        "Description": "The activity parameter definition for a ConnectedSourceDataJob.",
+                        "Source": "Example ",
+                        "ExistenceKind": "{{data_partition_id}}:reference-data--ExistenceKind:Prototype:",
+                        "VersionCreationReason": "Demonstrate ConnectedSourceDataJob ActivityTemplate",
+                        "Parameters": [
+                            {
+                                "Title": "ConnectedSourceSchemaAuthority",
+                                "AllowedParameterKind": "{{data_partition_id}}:reference-data--ParameterKind:String:",
+                                "IsInput": true,
+                                "IsOutput": false,
+                                "MaxOccurs": 1,
+                                "MinOccurs": 1,
+                                "DefaultValue": {
+                                    "Title": "ConnectedSourceSchemaAuthority",
+                                    "Selection": "Selected by default",
+                                    "StringParameter": "osdu",
+                                    "ParameterKindID": "{{data_partition_id}}:reference-data--ParameterKind:String:",
+                                    "ParameterRoleID": "{{data_partition_id}}:reference-data--ParameterRole:Input:"
+                                }
+                            },
+                            {
+                                "Title": "FetchStartDateTime",
+                                "AllowedParameterKind": "{{data_partition_id}}:reference-data--ParameterKind:String:",
+                                "IsInput": true,
+                                "IsOutput": false,
+                                "MaxOccurs": 1,
+                                "MinOccurs": 1,
+                                "DefaultValue": {
+                                    "Title": "FetchStartDateTime",
+                                    "Selection": "Selected by default",
+                                    "StringParameter": "",
+                                    "ParameterKindID": "{{data_partition_id}}:reference-data--ParameterKind:String:",
+                                    "ParameterRoleID": "{{data_partition_id}}:reference-data--ParameterRole:Input:"
+                                }
+                            },
+                            {
+                                "Title": "FetchEndDateTime",
+                                "AllowedParameterKind": "{{data_partition_id}}:reference-data--ParameterKind:String:",
+                                "IsInput": true,
+                                "IsOutput": false,
+                                "MaxOccurs": 1,
+                                "MinOccurs": 1,
+                                "DefaultValue": {
+                                    "Title": "FetchEndDateTime",
+                                    "Selection": "Selected by default",
+                                    "StringParameter": "",
+                                    "ParameterKindID": "{{data_partition_id}}:reference-data--ParameterKind:String:",
+                                    "ParameterRoleID": "{{data_partition_id}}:reference-data--ParameterRole:Input:"
+                                }
+                            },
+                            {
+                                "Title": "ParentDataMappingDummyMasterid",
+                                "AllowedParameterKind": "{{data_partition_id}}:reference-data--ParameterKind:String:",
+                                "IsInput": true,
+                                "IsOutput": false,
+                                "MaxOccurs": 1,
+                                "MinOccurs": 1,
+                                "DefaultValue": {
+                                    "Title": "ParentDataMappingDummyMasterid",
+                                    "Selection": "Selected by default",
+                                    "StringParameter": "master-data--Wellbore:ParentDataMapping-DummyWell",
+                                    "ParameterKindID": "{{data_partition_id}}:reference-data--ParameterKind:String:",
+                                    "ParameterRoleID": "{{data_partition_id}}:reference-data--ParameterRole:Input:"
+                                }
+                            }
+                        ],
+                        "ExtensionProperties": {}
+                    }
+                }
+            ]
+        }
+    }
+}

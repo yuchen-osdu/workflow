@@ -1,0 +1,59 @@
+{
+    "executionContext": {
+        "acl": {
+            "owners": [
+                "data.default.owners@{{data_partition_id}}.group"
+            ],
+            "viewers": [
+                "data.default.viewers@{{data_partition_id}}.group"
+            ]
+        },
+        "legal": {
+            "legaltags": [
+                "{{data_partition_id}}-demo-legaltag"
+            ],
+            "otherRelevantDataCountries": [
+                "US"
+            ]
+        },
+        "Payload": {
+            "AppKey": "gc-app",
+            "data-partition-id": "{{data_partition_id}}"
+        },
+        "manifest": {
+            "kind": "osdu:wks:Manifest:1.0.0",
+            "ReferenceData": [
+                {
+                    "id": "{{data_partition_id}}:reference-data--ParameterRole:Input",
+                    "kind": "osdu:wks:reference-data--ParameterRole:1.0.0",
+                    "acl": {
+                        "owners": [
+                            "data.default.owners@{{data_partition_id}}.group"
+                        ],
+                        "viewers": [
+                            "data.default.viewers@{{data_partition_id}}.group"
+                        ]
+                    },
+                    "legal": {
+                        "legaltags": [
+                            "{{data_partition_id}}-demo-legaltag"
+                        ],
+                        "otherRelevantDataCountries": [
+                            "US"
+                        ]
+                    },
+                    "data": {
+                        "AttributionPublication": "evergreen",
+                        "Description": "The related object is an input to the activity where is unknown if the type is direct, indirect, or reference. ",
+                        "Code": "Input",
+                        "Source": "Workbook Published/ParameterRole.1.0.0.xlsx; commit SHA 030c2d9c.",
+                        "Name": "Input",
+                        "AttributionAuthority": "OSDU",
+                        "VirtualProperties.DefaultName": "Input",
+                        "AttributionRevision": "R3"
+                    }
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,55 @@
+{
+    "executionContext": {
+        "acl": {
+            "owners": [
+                "data.default.owners@{{data_partition_id}}.group"
+            ],
+            "viewers": [
+                "data.default.viewers@{{data_partition_id}}.group"
+            ]
+        },
+        "legal": {
+            "legaltags": [
+                "{{data_partition_id}}-demo-legaltag"
+            ],
+            "otherRelevantDataCountries": [
+                "US"
+            ]
+        },
+        "Payload": {
+            "AppKey": "gc-app",
+            "data-partition-id": "{{data_partition_id}}"
+        },
+        "manifest": {
+            "kind": "osdu:wks:Manifest:1.0.0",
+            "MasterData": [
+                {
+                    "id": "{{data_partition_id}}:master-data--Organisation:GC",
+                    "kind": "osdu:wks:master-data--Organisation:1.0.0",
+                    "version": 1562066009929332,
+                    "acl": {
+                        "owners": [
+                            "data.default.owners@{{data_partition_id}}.group"
+                        ],
+                        "viewers": [
+                            "data.default.viewers@{{data_partition_id}}.group"
+                        ]
+                    },
+                    "legal": {
+                        "legaltags": [
+                            "{{data_partition_id}}-demo-legaltag"
+                        ],
+                        "otherRelevantDataCountries": [
+                            "US"
+                        ],
+                        "status": "compliant"
+                    },
+                    "data": {
+                        "Source": "GC",
+                        "ExistenceKind": "{{data_partition_id}}:reference-data--ExistenceKind:Prototype:"
+                    }
+                }
+            ]
+        }
+    }
+}

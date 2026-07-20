@@ -1,0 +1,8 @@
+{
+  "dag_id": "csv_ingestion",
+  "execution_date": "2023-03-16T14:05:23.722309+00:00",
+  "key": "skipped_ids",
+  "task_id": "update_status_finished",
+  "timestamp": "2023-03-16T14:07:29.295134+00:00",
+  "value": "{}"
+}

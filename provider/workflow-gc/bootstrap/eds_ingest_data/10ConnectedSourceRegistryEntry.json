@@ -1,0 +1,149 @@
+{
+    "executionContext": {
+        "acl": {
+            "owners": [
+                "data.default.owners@{{data_partition_id}}.group"
+            ],
+            "viewers": [
+                "data.default.viewers@{{data_partition_id}}.group"
+            ]
+        },
+        "legal": {
+            "legaltags": [
+                "{{data_partition_id}}-demo-legaltag"
+            ],
+            "otherRelevantDataCountries": [
+                "US"
+            ]
+        },
+        "Payload": {
+            "AppKey": "gc-app",
+            "data-partition-id": "{{data_partition_id}}"
+        },
+        "manifest": {
+            "kind": "osdu:wks:Manifest:1.0.0",
+            "MasterData": [
+                {
+                    "id": "{{data_partition_id}}:master-data--ConnectedSourceRegistryEntry:GCTest",
+                    "kind": "osdu:wks:master-data--ConnectedSourceRegistryEntry:1.2.0",
+                    "acl": {
+                        "owners": [
+                            "data.default.owners@{{data_partition_id}}.group"
+                        ],
+                        "viewers": [
+                            "data.default.viewers@{{data_partition_id}}.group"
+                        ]
+                    },
+                    "legal": {
+                        "legaltags": [
+                            "{{data_partition_id}}-demo-legaltag"
+                        ],
+                        "otherRelevantDataCountries": [
+                            "US"
+                        ],
+                        "status": "compliant"
+                    },
+                    "version": 1651665793168042,
+                    "data": {
+                        "Description": "GC",
+                        "ActivityTemplateID": "{{data_partition_id}}:master-data--ActivityTemplate:CSRE-ActivityTemplate-GC:",
+                        "SecuritySchemes": [
+                            {
+                                "ScopesKeyName": "scopes",
+                                "UserNameKeyName" : "username",
+                                "PasswordKeyName" : "password",
+                                "TypeID": "{{data_partition_id}}:reference-data--SecuritySchemeType:OAuth2:",
+                                "ClientSecretKeyName": "clientsecret",
+                                "FlowTypeID": "{{data_partition_id}}:reference-data--OAuth2FlowType:RefreshTokenKeyName:",
+                                "ClientIDKeyName": "clientid",
+                                "TokenUrl": "https://auth.ca-central-1.google.com/oauth2/token",
+                                "Name": "GC",
+                                "RefreshTokenKeyName": "refresh-token"
+                            }
+                        ],
+                        "Source": "GC",
+                        "Name": "GC",
+                        "SourceOrganisationID": "{{data_partition_id}}:master-data--Organisation:GC:",
+                        "VirtualProperties.DefaultName": "GC",
+                        "Parameters": [
+                            {
+                                "StringParameter": "https://preshiptesting.osdu.google/api/dataset/v1",
+                                "ParameterRoleID": "{{data_partition_id}}:reference-data--ParameterRole:Input:",
+                                "DataObjectParameter": null,
+                                "Selection": null,
+                                "Title": "DatasetURL",
+                                "ParameterKindID": "{{data_partition_id}}:reference-data--ParameterKind:String:",
+                                "DataQuantityParameterUOMID": null
+                            },
+                            {
+                                "StringParameter": "https://preshiptesting.osdu.google/api/search/v2/query_with_cursor",
+                                "ParameterRoleID": "{{data_partition_id}}:reference-data--ParameterRole:Input:",
+                                "DataObjectParameter": null,
+                                "Selection": null,
+                                "Title": "SearchURL",
+                                "ParameterKindID": "{{data_partition_id}}:reference-data--ParameterKind:String:",
+                                "DataQuantityParameterUOMID": null
+                            }
+                        ],
+                        "SmtpSchemes": [
+                            {
+                                "EmailTriggerFrequency": "5 4 11 * *",
+                                "SmtpPasswordKeyName": "testing-email-password",
+                                "SmtpSenderMail": "testingedsscheduler@gmail.com",
+                                "SmtpTimeOut": 30,
+                                "SmtpRetryLimit": 5,
+                                "SmtpHostKeyName": "testing-email-hostname",
+                                "SmtpStartTLS": true,
+                                "SmtpSSL": false,
+                                "SmtpPort": 587,
+                                "SmtpReceiverMail": [
+                                    "testingedsscheduler@gmail.com"
+                                ],
+                                "SmtpUserKeyName": "testing-email-username",
+                                "Name": "GC"
+                            }
+                        ],
+                        "FullOSDUImplementationIndicator": false,
+                        "ReferenceValueMappings": {
+                            "target:FacilityEventType": {
+                                "TDReached": [
+                                    "TDR"
+                                ],
+                                "Spud": [
+                                    "SpudDate"
+                                ]
+                            },
+                            "target:ResourceCurationStatus": {
+                                "CREATED": [
+                                    "Created",
+                                    "Added"
+                                ]
+                            },
+                            "target:FacilityType": {
+                                "Well": [
+                                    "Wells"
+                                ]
+                            },
+                            "target:OperatingEnvironment": {
+                                "Offshore": [
+                                    "Off",
+                                    "OFFSHORE",
+                                    "offshore",
+                                    "Offshore",
+                                    "OFF"
+                                ],
+                                "Onshore": [
+                                    "On",
+                                    "ONSHORE",
+                                    "onshore",
+                                    "ON",
+                                    "on"
+                                ]
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}

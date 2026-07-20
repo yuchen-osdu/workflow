@@ -1,0 +1,8 @@
+{
+  "dag_id": "csv_ingestion",
+  "execution_date": "2023-03-16T14:05:23.722309+00:00",
+  "key": "saved_record_ids",
+  "task_id": "update_status_finished",
+  "timestamp": "2023-03-16T14:07:29.326533+00:00",
+  "value": "{'process_single_manifest_file_task': ['osdu:master-data--ActivityTemplate:CSDJ-ActivityTemplate-GC']}"
+}

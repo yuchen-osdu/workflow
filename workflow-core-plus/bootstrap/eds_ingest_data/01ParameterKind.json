@@ -1,0 +1,62 @@
+{
+    "executionContext": {
+        "acl": {
+            "owners": [
+                "data.default.owners@{{data_partition_id}}.group"
+            ],
+            "viewers": [
+                "data.default.viewers@{{data_partition_id}}.group"
+            ]
+        },
+        "legal": {
+            "legaltags": [
+                "{{data_partition_id}}-demo-legaltag"
+            ],
+            "otherRelevantDataCountries": [
+                "US"
+            ]
+        },
+        "Payload": {
+            "AppKey": "gc-app",
+            "data-partition-id": "{{data_partition_id}}"
+        },
+        "manifest": {
+            "kind": "osdu:wks:Manifest:1.0.0",
+            "ReferenceData": [
+                {
+                    "id": "{{data_partition_id}}:reference-data--ParameterKind:String",
+                    "kind": "osdu:wks:reference-data--ParameterKind:1.0.0",
+                    "acl": {
+                        "owners": [
+                            "data.default.owners@{{data_partition_id}}.group"
+                        ],
+                        "viewers": [
+                            "data.default.viewers@{{data_partition_id}}.group"
+                        ]
+                    },
+                    "legal": {
+                        "legaltags": [
+                            "{{data_partition_id}}-demo-legaltag"
+                        ],
+                        "otherRelevantDataCountries": [
+                            "US"
+                        ]
+                    },
+                    "data": {
+                        "AttributionPublication": "osdu",
+                        "Description": "The activity parameter is of type string; StringParameter is expected to carry the value.",
+                        "Code": "String",
+                        "Name": "String",
+                        "VirtualProperties.DefaultName": "String",
+                        "NameAlias": [
+                            {
+                                "AliasName": "string"
+                            }
+                        ],
+                        "AttributionRevision": "2.1"
+                    }
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,46 @@
+{
+  "dags": {
+    "test_simple_http_dag": {
+      "fileName": "test_simple_http_dag.py"
+    },
+    "test_simple_python_dag": {
+      "fileName": "test_simple_python_dag.py"
+    },
+    "test_simple_kubernetes_dag": {
+      "fileName": "test_simple_kubernetes_dag.py"
+    },
+    "test_simple_custom_operator_dag": {
+      "fileName": "test_simple_custom_operator_dag.py"
+    },
+    "test_validate_run_config_dag": {
+      "fileName": "test_validate_run_config_dag.py"
+    },
+    "test_dummy_dag": {
+      "fileName": "test_dummy_dag.py"
+    }
+  },
+  "operators": {
+    "simple_custom_operator": {
+      "fileName": "simple_custom_operator.py",
+      "className": "HelloOperator",
+      "properties": [
+        {
+          "name": "name",
+          "description": "Name to be used by the operator to print",
+          "mandatory": true
+        }
+      ]
+    },
+    "simple_custom_operator_2": {
+      "fileName": "simple_custom_operator.py",
+      "className": "HelloOperator",
+      "properties": [
+        {
+          "name": "name",
+          "description": "Name to be used by the operator to print",
+          "mandatory": true
+        }
+      ]
+    }
+  }
+}

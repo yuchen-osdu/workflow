@@ -1,0 +1,141 @@
+{
+    "executionContext": {
+        "acl": {
+            "owners": [
+                "data.default.owners@{{data_partition_id}}.group"
+            ],
+            "viewers": [
+                "data.default.viewers@{{data_partition_id}}.group"
+            ]
+        },
+        "legal": {
+            "legaltags": [
+                "{{data_partition_id}}-demo-legaltag"
+            ],
+            "otherRelevantDataCountries": [
+                "US"
+            ]
+        },
+        "Payload": {
+            "AppKey": "gc-app",
+            "data-partition-id": "{{data_partition_id}}"
+        },
+        "manifest": {
+            "kind": "osdu:wks:Manifest:1.0.0",
+            "ReferenceData": [
+                {
+                    "id": "{{data_partition_id}}:reference-data--OAuth2FlowType:ClientCredentials",
+                    "kind": "{{data_partition_id}}:wks:reference-data--OAuth2FlowType:1.0.0",
+                    "acl": {
+                        "owners": [
+                            "data.default.owners@{{data_partition_id}}.group"
+                        ],
+                        "viewers": [
+                            "data.default.viewers@{{data_partition_id}}.group"
+                        ]
+                    },
+                    "legal": {
+                        "legaltags": [
+                            "{{data_partition_id}}-demo-legaltag"
+                        ],
+                        "otherRelevantDataCountries": [
+                            "US"
+                        ]
+                    },
+                    "data": {
+                        "Name": "Client Credentials",
+                        "Description": "OAuth 2.0 flow, or grant type, used for accessing data belonging to a client application.",
+                        "Code": "ClientCredentials",
+                        "AttributionAuthority": "OSDU",
+                        "ID": "ClientCredentials",
+                        "Source": "OAuth2FlowType.1.0.0.xlsx"
+                    }
+                },
+                {
+                    "id": "{{data_partition_id}}:reference-data--OAuth2FlowType:AuthorizationCode",
+                    "kind": "{{data_partition_id}}:wks:reference-data--OAuth2FlowType:1.0.0",
+                    "acl": {
+                        "owners": [
+                            "data.default.owners@{{data_partition_id}}.group"
+                        ],
+                        "viewers": [
+                            "data.default.viewers@{{data_partition_id}}.group"
+                        ]
+                    },
+                    "legal": {
+                        "legaltags": [
+                            "{{data_partition_id}}-demo-legaltag"
+                        ],
+                        "otherRelevantDataCountries": [
+                            "US"
+                        ]
+                    },
+                    "data": {
+                        "Name": "Authorization Code",
+                        "Description": "OAuth 2.0 flow, or grant type, requiring a user to interactively authenticate with an identity provider.",
+                        "Code": "AuthorizationCode",
+                        "AttributionAuthority": "OSDU",
+                        "ID": "AuthorizationCode",
+                        "Source": "OAuth2FlowType.1.0.0.xlsx"
+                    }
+                },
+                {
+                    "id": "{{data_partition_id}}:reference-data--OAuth2FlowType:PasswordCredentials",
+                    "kind": "{{data_partition_id}}:wks:reference-data--OAuth2FlowType:1.0.0",
+                    "acl": {
+                        "owners": [
+                            "data.default.owners@{{data_partition_id}}.group"
+                        ],
+                        "viewers": [
+                            "data.default.viewers@{{data_partition_id}}.group"
+                        ]
+                    },
+                    "legal": {
+                        "legaltags": [
+                            "{{data_partition_id}}-demo-legaltag"
+                        ],
+                        "otherRelevantDataCountries": [
+                            "US"
+                        ]
+                    },
+                    "data": {
+                        "Name": "Password Credentials",
+                        "Description": "OAuth 2.0 flow, or grant type, that involves directly sending username and password.",
+                        "Code": "PasswordCredentials",
+                        "AttributionAuthority": "OSDU",
+                        "ID": "PasswordCredentials",
+                        "Source": "OAuth2FlowType.1.0.0.xlsx"
+                    }
+                },
+                {
+                    "id": "{{data_partition_id}}:reference-data--OAuth2FlowType:RefreshTokenKeyName",
+                    "kind": "osdu:wks:reference-data--OAuth2FlowType:1.0.0",
+                    "acl": {
+                        "owners": [
+                            "data.default.owners@{{data_partition_id}}.group"
+                        ],
+                        "viewers": [
+                            "data.default.viewers@{{data_partition_id}}.group"
+                        ]
+                    },
+                    "legal": {
+                        "legaltags": [
+                            "{{data_partition_id}}-demo-legaltag"
+                        ],
+                        "otherRelevantDataCountries": [
+                            "US"
+                        ]
+                    },
+                    "data": {
+                        "Name": "Refresh Token",
+                        "Description": "OAuth 2.0 flow, or grant type, requiring a user to interactively authenticate with an identity provider.",
+                        "Code": "Refresh Token",
+                        "AttributionAuthority": "OSDU",
+                        "ID": "Refresh Token",
+                        "Source": "OAuth2FlowType.1.0.0.xlsx"
+                    }
+                }
+            ]
+        }
+    }
+}

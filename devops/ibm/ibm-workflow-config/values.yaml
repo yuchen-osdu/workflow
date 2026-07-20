@@ -1,0 +1,53 @@
+data:
+# common
+  javaAppJar: "/deployments/*-spring-boot.jar"
+  serverPort: 8080
+  contextPath: "/api/workflow"
+  envPrefix: ibm-iks
+  envPrefixProject: ibm-ibm-build
+  
+# log
+  logPrefix: workflow
+  loggingLevelOsdu: debug
+  loggingLevelSpring: debug
+
+# ibm 
+  beanDefOverriding: true
+  healthCheckUri: "/api/workflow/v1/liveness_check,/api/workflow/v1/readiness_check"
+
+#authorization
+  authorizeAPI: http://TBD:8080/api/entitlements/v2
+  deployEnv: CLOUD
+  #get-keycloakAuthHostName-from-post-install-kc-ingress
+#db 
+  dbURL: http://tbd:5984
+  dbUser: admin
+  dbPassw: tbd
+#keycloack
+  keycloakEndPointHost: tbd
+  keycloakRealm: OSDU
+  keycloakUserEmail: admin-sa@ibm.com
+  keycloakUsername: admin-sa
+  keycloakPassword: changeit
+  keycloakClientId: osdu-login
+  keycloakClientSecret: referenv 
+# AmQP
+  amqpUrl: amqp://ex-aao-amqp-0-svc:5672 
+  amqpUsername: tbd
+  amqpUserPassword: tbd
+#tenant-validation
+  pKCClientId: partition-service
+  grantType: password
+  #get-from-job or dynamically
+  pKCPassword: changeit
+  pKCUser: partition-service-admin
+  pKAcceptHttp: true
+  tenantCacheExpiryInSec: 10000
+  #refer-cm-template
+  patitionAPI: refer-configmap-template
+#Airflow
+  airflowUser: admin
+  flag: true
+
+conf:
+  configmap: "workflow-config"

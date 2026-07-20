@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ .Values.conf.configmap }}"
+data:
+#log-and-common
+  LOG_LEVEL: "{{ .Values.data.logLevel }}"
+  LOG_PREFIX: "{{ .Values.data.logPrefix }}"
+  logging.level.org.opengroup.osdu: "{{ .Values.data.loggingLevelOsdu }}"
+  logging.level.org.springframework.web: "{{ .Values.data.loggingLevelSpring }}"
+  JAVA_APP_JAR: "{{ .Values.data.javaAppJar }}"
+  server.servlet.context-path: "{{ .Values.data.contextPath }}"
+  server.port: "{{ .Values.data.serverPort }}"
+  ibm.env.prefix:  "{{ .Values.data.envPrefix }}"
+  ibm.env.prefix_project:  "{{ .Values.data.envPrefixProject }}"
+  spring.main.allow-bean-definition-overriding: "{{ .Values.data.beanDefOverriding }}" 
+  cache.expiration: "{{ .Values.data.cacheExpiration }}"
+  cache.maxSize: "{{ .Values.data.cahceMaxSize }}"
+  ibm.health-check-uri: "{{ .Values.data.healthCheckUri }}"
+  
+# Keycloak
+  ibm.keycloak.realm:  "{{ .Values.data.keycloakRealm }}"
+  ibm.keycloak.useremail:  "{{ .Values.data.keycloakUserEmail }}"
+  ibm.keycloak.username:  "{{ .Values.data.keycloakUsername }}"
+  ibm.keycloak.password:  "{{ .Values.data.keycloakPassword }}"
+  ibm.keycloak.client_id:  "{{ .Values.data.keycloakClientId }}"
+  ibm.keycloak.client_secret:  "{{ .Values.data.keycloakClientSecret }}"
+   
+# AMQ
+  amqphub.amqp10jms.remote-url:  "{{ .Values.data.amqpUrl }}"
+  amqphub.amqp10jms.username:  "{{ .Values.data.amqpUsername }}"
+  amqphub.amqp10jms.password:  "{{ .Values.data.amqpUserPassword }}"
+#db
+  ibm.db.url: "http://{{ .Release.Name }}-couchdb:5984"
+  ibm.db.user: "{{ .Values.data.dbUser }}"
+  ibm.db.password: "{{ .Values.data.dbPassw }}"
+#Authorization  
+  AUTHORIZE_API: "http://{{ .Release.Name }}-ibm-entitlement-deploy:8080/api/entitlements/v2"
+  DEPLOYMENT_ENVIRONMENT: "{{ .Values.data.deployEnv }}"
+  osdu.entitlements.url: "http://{{ .Release.Name }}-ibm-entitlement-deploy:8080/api/entitlements/v2"
+#tenant-validation
+  PARTITION_API: "http://{{ .Release.Name }}-ibm-partition-deploy:8080/api/partition/v1"
+  partition.keycloak.client_id: "{{ .Values.data.pKCClientId }}"
+  partition.keycloak.grant_type: "{{ .Values.data.grantType }}"
+  partition.keycloak.password: "{{ .Values.data.pKCPassword }}"
+  partition.keycloak.realm: "{{ .Values.data.keycloakRealm }}"
+  partition.keycloak.user: "{{ .Values.data.pKCUser }}"
+  partition.keycloak.accept_http: "{{ .Values.data.pKAcceptHttp }}"
+  tenantCache.exp.time.in.second: "{{ .Values.data.tenantCacheExpiryInSec }}"
+#Airflow
+  osdu.airflow.username: "{{ .Values.data.airflowUser }}"   
+  osdu.airflow.url: "http://{{ .Release.Name }}-web:8080"
+  osdu.airflow.version2: "{{ .Values.data.flag }}"
+  

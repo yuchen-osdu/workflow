@@ -1,0 +1,57 @@
+{
+    "executionContext": {
+        "acl": {
+            "owners": [
+                "data.default.owners@{{data_partition_id}}.group"
+            ],
+            "viewers": [
+                "data.default.viewers@{{data_partition_id}}.group"
+            ]
+        },
+        "legal": {
+            "legaltags": [
+                "{{data_partition_id}}-demo-legaltag"
+            ],
+            "otherRelevantDataCountries": [
+                "US"
+            ]
+        },
+        "Payload": {
+            "AppKey": "gc-app",
+            "data-partition-id": "{{data_partition_id}}"
+        },
+        "manifest": {
+            "kind": "osdu:wks:Manifest:1.0.0",
+            "ReferenceData": [
+                {
+                    "id": "{{data_partition_id}}:reference-data--ExistenceKind:Prototype",
+                    "kind": "osdu:wks:reference-data--ExistenceKind:1.0.0",
+                    "acl": {
+                        "owners": [
+                            "data.default.owners@{{data_partition_id}}.group"
+                        ],
+                        "viewers": [
+                            "data.default.viewers@{{data_partition_id}}.group"
+                        ]
+                    },
+                    "legal": {
+                        "legaltags": [
+                            "{{data_partition_id}}-demo-legaltag"
+                        ],
+                        "otherRelevantDataCountries": [
+                            "US"
+                        ]
+                    },
+                    "data": {
+                        "Description": "The data describes a concrete implementation currently setup on field for TEST purpose.",
+                        "Code": "Prototype",
+                        "Source": "Workbook Published/ExistenceKind.1.0.0.xlsx; commit SHA c1d72417.",
+                        "Name": "Prototype",
+                        "AttributionAuthority": "OSDU",
+                        "VirtualProperties.DefaultName": "Prototype"
+                    }
+                }
+            ]
+        }
+    }
+}
