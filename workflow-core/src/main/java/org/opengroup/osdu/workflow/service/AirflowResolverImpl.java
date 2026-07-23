@@ -19,9 +19,9 @@ package org.opengroup.osdu.workflow.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.opengroup.osdu.core.common.model.info.ConnectedOuterService;
@@ -51,8 +51,7 @@ public class AirflowResolverImpl implements IAirflowResolver {
 
   private final IWorkflowEngineService internalWorkflowEngineService;
   private final IWorkflowEngineExtension internalWorkflowEngineExtension;
-  private final Map<String, IWorkflowEngineService> externalAirflowMap = new ConcurrentHashMap<>();
-  private final Map<String, IWorkflowEngineExtension> externalAirflowExtensionMap = new ConcurrentHashMap<>();
+  private final Set<String> externalAirflowIds = ConcurrentHashMap.newKeySet();
 
   private final WorkflowEngineServiceFactory workflowEngineServiceFactory;
   private final WorkflowEngineExtensionServiceFactory workflowEngineExtensionServiceFactory;
@@ -68,12 +67,12 @@ public class AirflowResolverImpl implements IAirflowResolver {
             .name(INTERNAL_AIRFLOW)
             .version(internalWorkflowEngineService.getVersion().orElse(N_A))
             .build());
-    externalAirflowMap.entrySet().stream()
+    externalAirflowIds.stream()
         .map(
-            e ->
+            secretId ->
                 ConnectedOuterService.builder()
-                    .name(EXTERNAL_AIRFLOW + e.getKey())
-                    .version(e.getValue().getVersion().orElse(N_A))
+                    .name(EXTERNAL_AIRFLOW + secretId)
+                    .version(getExternalWorkflowEngineService(secretId).getVersion().orElse(N_A))
                     .build())
         .forEach(connectedOuterServices::add);
     return connectedOuterServices;
@@ -87,16 +86,8 @@ public class AirflowResolverImpl implements IAirflowResolver {
     if (externalAirflowSecretId.isPresent()) {
       String secretId = externalAirflowSecretId.get();
       log.debug("Using external airflow engine for secret id: {}", secretId);
-      return externalAirflowMap.computeIfAbsent(
-          secretId,
-          s -> {
-            AirflowVersionAndAirflowApiClient airflowVersionAndAirflowApiClient =
-                getAirflowVersionAndApiClientFromSecret(s);
-
-            return workflowEngineServiceFactory.createWorkflowEngineService(
-                airflowVersionAndAirflowApiClient.airflowVersion(),
-                airflowVersionAndAirflowApiClient.airflowApiClient());
-          });
+      externalAirflowIds.add(secretId);
+      return getExternalWorkflowEngineService(secretId);
     }
     log.debug("Using internal airflow engine");
     return internalWorkflowEngineService;
@@ -110,16 +101,13 @@ public class AirflowResolverImpl implements IAirflowResolver {
     if (externalAirflowSecretId.isPresent()) {
       String secretId = externalAirflowSecretId.get();
       log.debug("Using external airflow engine extension for secret id: {}", secretId);
-      return externalAirflowExtensionMap.computeIfAbsent(
-          secretId,
-          s -> {
-            AirflowVersionAndAirflowApiClient airflowVersionAndAirflowApiClient =
-                getAirflowVersionAndApiClientFromSecret(s);
+      externalAirflowIds.add(secretId);
+      AirflowVersionAndAirflowApiClient airflowVersionAndAirflowApiClient =
+          getAirflowVersionAndApiClientFromSecret(secretId);
 
-            return workflowEngineExtensionServiceFactory.createWorkflowEngineExtension(
-                airflowVersionAndAirflowApiClient.airflowVersion(),
-                airflowVersionAndAirflowApiClient.airflowApiClient());
-          });
+      return workflowEngineExtensionServiceFactory.createWorkflowEngineExtension(
+          airflowVersionAndAirflowApiClient.airflowVersion(),
+          airflowVersionAndAirflowApiClient.airflowApiClient());
     }
     log.debug("Using internal airflow engine extension");
     return internalWorkflowEngineExtension;
@@ -137,6 +125,15 @@ public class AirflowResolverImpl implements IAirflowResolver {
     }
     log.debug("No external airflow secret id found");
     return Optional.empty();
+  }
+
+  private IWorkflowEngineService getExternalWorkflowEngineService(String secretId) {
+    AirflowVersionAndAirflowApiClient airflowVersionAndAirflowApiClient =
+        getAirflowVersionAndApiClientFromSecret(secretId);
+
+    return workflowEngineServiceFactory.createWorkflowEngineService(
+        airflowVersionAndAirflowApiClient.airflowVersion(),
+        airflowVersionAndAirflowApiClient.airflowApiClient());
   }
 
   private AirflowVersionAndAirflowApiClient getAirflowVersionAndApiClientFromSecret(

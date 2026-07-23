@@ -56,6 +56,7 @@ class AirflowResolverImplTest {
   private static final String EXTERNAL_AIRFLOW_VERSION = "external-airflow-version";
   private static final String INTERNAL_AIRFLOW = "Internal Airflow";
   private static final String EXTERNAL_AIRFLOW = "External Airflow: ";
+  private static final String N_A = "N/A";
 
   @Mock private IWorkflowEngineService internalWorkflowEngineService;
   @Mock private IWorkflowEngineExtension internalWorkflowEngineExtension;
@@ -113,6 +114,113 @@ class AirflowResolverImplTest {
   }
 
   @Test
+  void should_returnNotAvailable_when_internalAirflowVersionIsEmpty() {
+    // given
+    when(internalWorkflowEngineService.getVersion()).thenReturn(Optional.empty());
+
+    // when
+    List<ConnectedOuterService> result =
+        airflowResolver.getConnectedWorkflowEngineServicesVersions();
+
+    // then
+    assertThat(result).hasSize(1);
+    assertThat(result.get(0).getName()).isEqualTo(INTERNAL_AIRFLOW);
+    assertThat(result.get(0).getVersion()).isEqualTo(N_A);
+  }
+
+  @Test
+  void should_returnNotAvailable_when_externalAirflowVersionIsEmpty() {
+    // given
+    when(internalWorkflowEngineService.getVersion())
+        .thenReturn(Optional.of(INTERNAL_AIRFLOW_VERSION));
+
+    IWorkflowEngineService externalWorkflowEngineService = mock(IWorkflowEngineService.class);
+    when(externalWorkflowEngineService.getVersion()).thenReturn(Optional.empty());
+    WorkflowMetadata workflowMetadata =
+        getWorkflowMetadataForExternalAirflowAndPrepareAirflowApiClient();
+    when(workflowEngineServiceFactory.createWorkflowEngineService(
+            EXTERNAL_AIRFLOW_VERSION, airflowApiClient))
+        .thenReturn(externalWorkflowEngineService);
+
+    // when
+    airflowResolver.getWorkflowEngineService(workflowMetadata);
+    List<ConnectedOuterService> result =
+        airflowResolver.getConnectedWorkflowEngineServicesVersions();
+
+    // then
+    assertThat(result).hasSize(2);
+    assertThat(result.get(1).getName()).isEqualTo(EXTERNAL_AIRFLOW + SECRET_ID);
+    assertThat(result.get(1).getVersion()).isEqualTo(N_A);
+  }
+
+  @Test
+  void should_notDuplicateExternalAirflowInInfo_when_sameSecretIsResolvedMultipleWays() {
+    // given
+    when(internalWorkflowEngineService.getVersion())
+        .thenReturn(Optional.of(INTERNAL_AIRFLOW_VERSION));
+
+    IWorkflowEngineService externalWorkflowEngineService = mock(IWorkflowEngineService.class);
+    when(externalWorkflowEngineService.getVersion())
+        .thenReturn(Optional.of(EXTERNAL_AIRFLOW_VERSION));
+    IWorkflowEngineExtension externalWorkflowEngineExtension = mock(IWorkflowEngineExtension.class);
+    WorkflowMetadata workflowMetadata =
+        getWorkflowMetadataForExternalAirflowAndPrepareAirflowApiClient();
+    when(workflowEngineServiceFactory.createWorkflowEngineService(
+            EXTERNAL_AIRFLOW_VERSION, airflowApiClient))
+        .thenReturn(externalWorkflowEngineService);
+    when(workflowEngineExtensionServiceFactory.createWorkflowEngineExtension(
+            EXTERNAL_AIRFLOW_VERSION, airflowApiClient))
+        .thenReturn(externalWorkflowEngineExtension);
+
+    // when
+    airflowResolver.getWorkflowEngineService(workflowMetadata);
+    airflowResolver.getWorkflowEngineExtension(workflowMetadata);
+    List<ConnectedOuterService> result =
+        airflowResolver.getConnectedWorkflowEngineServicesVersions();
+
+    // then
+    assertThat(result).hasSize(2);
+    assertThat(result)
+        .filteredOn(service -> service.getName().equals(EXTERNAL_AIRFLOW + SECRET_ID))
+        .hasSize(1);
+  }
+
+  @Test
+  void should_refreshExternalAirflowVersion_when_infoIsRequestedAgain() {
+    // given
+    String firstInfoVersion = "first-info-version";
+    String secondInfoVersion = "second-info-version";
+    when(internalWorkflowEngineService.getVersion())
+        .thenReturn(Optional.of(INTERNAL_AIRFLOW_VERSION));
+
+    IWorkflowEngineService registrationWorkflowEngineService = mock(IWorkflowEngineService.class);
+    IWorkflowEngineService firstInfoWorkflowEngineService = mock(IWorkflowEngineService.class);
+    IWorkflowEngineService secondInfoWorkflowEngineService = mock(IWorkflowEngineService.class);
+    when(firstInfoWorkflowEngineService.getVersion()).thenReturn(Optional.of(firstInfoVersion));
+    when(secondInfoWorkflowEngineService.getVersion()).thenReturn(Optional.of(secondInfoVersion));
+    WorkflowMetadata workflowMetadata =
+        getWorkflowMetadataForExternalAirflowAndPrepareAirflowApiClient();
+    when(workflowEngineServiceFactory.createWorkflowEngineService(
+            EXTERNAL_AIRFLOW_VERSION, airflowApiClient))
+        .thenReturn(
+            registrationWorkflowEngineService,
+            firstInfoWorkflowEngineService,
+            secondInfoWorkflowEngineService);
+
+    // when
+    airflowResolver.getWorkflowEngineService(workflowMetadata);
+    List<ConnectedOuterService> firstResult =
+        airflowResolver.getConnectedWorkflowEngineServicesVersions();
+    List<ConnectedOuterService> secondResult =
+        airflowResolver.getConnectedWorkflowEngineServicesVersions();
+
+    // then
+    assertThat(firstResult.get(1).getVersion()).isEqualTo(firstInfoVersion);
+    assertThat(secondResult.get(1).getVersion()).isEqualTo(secondInfoVersion);
+    verify(externalAirflowConfigService, times(3)).getExternalAirflowConfig(SECRET_ID);
+  }
+
+  @Test
   void should_returnInternalWorkflowEngineService_when_noExternalAirflowSecretInMetadata() {
     // given
     WorkflowMetadata workflowMetadata =
@@ -159,23 +267,25 @@ class AirflowResolverImplTest {
 
   @Test
   void
-      should_returnExternalWorkflowEngineService_when_externalAirflowSecretIsInMetadataAndInCache() {
+      should_refreshExternalWorkflowEngineService_when_externalAirflowSecretIsResolvedAgain() {
     // given
     WorkflowMetadata workflowMetadata =
         getWorkflowMetadataForExternalAirflowAndPrepareAirflowApiClient();
 
     IWorkflowEngineService externalWorkflowEngineService = mock(IWorkflowEngineService.class);
+    IWorkflowEngineService refreshedExternalWorkflowEngineService =
+        mock(IWorkflowEngineService.class);
     when(workflowEngineServiceFactory.createWorkflowEngineService(
         EXTERNAL_AIRFLOW_VERSION, airflowApiClient))
-        .thenReturn(externalWorkflowEngineService);
+        .thenReturn(externalWorkflowEngineService, refreshedExternalWorkflowEngineService);
 
     // when
     airflowResolver.getWorkflowEngineService(workflowMetadata);
     IWorkflowEngineService result = airflowResolver.getWorkflowEngineService(workflowMetadata);
 
     // then
-    assertThat(result).isEqualTo(externalWorkflowEngineService);
-    verify(externalAirflowConfigService, times(1)).getExternalAirflowConfig(SECRET_ID);
+    assertThat(result).isEqualTo(refreshedExternalWorkflowEngineService);
+    verify(externalAirflowConfigService, times(2)).getExternalAirflowConfig(SECRET_ID);
   }
 
   @Test
@@ -225,22 +335,24 @@ class AirflowResolverImplTest {
 
   @Test
   void
-      should_returnExternalWorkflowEngineExtension_when_externalAirflowSecretIsInMetadataAndInCache() {
+      should_refreshExternalWorkflowEngineExtension_when_externalAirflowSecretIsResolvedAgain() {
     // given
     WorkflowMetadata workflowMetadata =
         getWorkflowMetadataForExternalAirflowAndPrepareAirflowApiClient();
     IWorkflowEngineExtension externalWorkflowEngineExtension = mock(IWorkflowEngineExtension.class);
+    IWorkflowEngineExtension refreshedExternalWorkflowEngineExtension =
+        mock(IWorkflowEngineExtension.class);
     when(workflowEngineExtensionServiceFactory.createWorkflowEngineExtension(
         EXTERNAL_AIRFLOW_VERSION, airflowApiClient))
-        .thenReturn(externalWorkflowEngineExtension);
+        .thenReturn(externalWorkflowEngineExtension, refreshedExternalWorkflowEngineExtension);
 
     // when
     airflowResolver.getWorkflowEngineExtension(workflowMetadata);
     IWorkflowEngineExtension result = airflowResolver.getWorkflowEngineExtension(workflowMetadata);
 
     // then
-    assertThat(result).isEqualTo(externalWorkflowEngineExtension);
-    verify(externalAirflowConfigService, times(1)).getExternalAirflowConfig(SECRET_ID);
+    assertThat(result).isEqualTo(refreshedExternalWorkflowEngineExtension);
+    verify(externalAirflowConfigService, times(2)).getExternalAirflowConfig(SECRET_ID);
   }
 
   private WorkflowMetadata getWorkflowMetadataForExternalAirflowAndPrepareAirflowApiClient() {
