@@ -18,6 +18,7 @@
 package org.opengroup.osdu.workflow.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -228,26 +229,19 @@ class AirflowResolverImplTest {
   }
 
   @Test
-  void should_refreshExternalAirflowVersion_when_infoIsRequestedAgain() {
+  void should_reuseCachedExternalAirflowVersion_when_infoIsRequestedAgain() {
     // given
     String firstInfoVersion = "first-info-version";
-    String secondInfoVersion = "second-info-version";
     when(internalWorkflowEngineService.getVersion())
         .thenReturn(Optional.of(INTERNAL_AIRFLOW_VERSION));
 
-    IWorkflowEngineService registrationWorkflowEngineService = mock(IWorkflowEngineService.class);
     IWorkflowEngineService firstInfoWorkflowEngineService = mock(IWorkflowEngineService.class);
-    IWorkflowEngineService secondInfoWorkflowEngineService = mock(IWorkflowEngineService.class);
     when(firstInfoWorkflowEngineService.getVersion()).thenReturn(Optional.of(firstInfoVersion));
-    when(secondInfoWorkflowEngineService.getVersion()).thenReturn(Optional.of(secondInfoVersion));
     WorkflowMetadata workflowMetadata =
         getWorkflowMetadataForExternalAirflowAndPrepareAirflowApiClient();
     when(workflowEngineServiceFactory.createWorkflowEngineService(
             EXTERNAL_AIRFLOW_VERSION, airflowApiClient))
-        .thenReturn(
-            registrationWorkflowEngineService,
-            firstInfoWorkflowEngineService,
-            secondInfoWorkflowEngineService);
+        .thenReturn(firstInfoWorkflowEngineService);
 
     // when
     airflowResolver.getWorkflowEngineService(workflowMetadata);
@@ -258,8 +252,8 @@ class AirflowResolverImplTest {
 
     // then
     assertThat(firstResult.get(1).getVersion()).isEqualTo(firstInfoVersion);
-    assertThat(secondResult.get(1).getVersion()).isEqualTo(secondInfoVersion);
-    verify(externalAirflowConfigService, times(3)).getExternalAirflowConfig(SECRET_ID);
+    assertThat(secondResult.get(1).getVersion()).isEqualTo(firstInfoVersion);
+    verify(externalAirflowConfigService).getExternalAirflowConfig(SECRET_ID);
   }
 
   @Test
@@ -303,13 +297,15 @@ class AirflowResolverImplTest {
     IWorkflowEngineService result = airflowResolver.getWorkflowEngineService(workflowMetadata);
 
     // then
-    assertThat(result).isEqualTo(externalWorkflowEngineService);
+    assertThat(result).isNotNull();
+    result.saveCustomOperator("operator", "operator.py");
+    verify(externalWorkflowEngineService).saveCustomOperator("operator", "operator.py");
     verify(externalAirflowConfigService).getExternalAirflowConfig(SECRET_ID);
   }
 
   @Test
   void
-      should_refreshExternalWorkflowEngineService_when_externalAirflowSecretIsResolvedAgain() {
+      should_reuseExternalWorkflowEngineService_when_externalAirflowSecretIsResolvedAgain() {
     // given
     WorkflowMetadata workflowMetadata =
         getWorkflowMetadataForExternalAirflowAndPrepareAirflowApiClient();
@@ -322,11 +318,36 @@ class AirflowResolverImplTest {
         .thenReturn(externalWorkflowEngineService, refreshedExternalWorkflowEngineService);
 
     // when
-    airflowResolver.getWorkflowEngineService(workflowMetadata);
+    IWorkflowEngineService firstResult = airflowResolver.getWorkflowEngineService(workflowMetadata);
     IWorkflowEngineService result = airflowResolver.getWorkflowEngineService(workflowMetadata);
 
     // then
-    assertThat(result).isEqualTo(refreshedExternalWorkflowEngineService);
+    assertThat(result).isSameAs(firstResult);
+    verify(externalAirflowConfigService).getExternalAirflowConfig(SECRET_ID);
+  }
+
+  @Test
+  void should_refreshExternalWorkflowEngineServiceAndRetry_when_airflowCallFails() {
+    // given
+    WorkflowMetadata workflowMetadata =
+        getWorkflowMetadataForExternalAirflowAndPrepareAirflowApiClient();
+    IWorkflowEngineService externalWorkflowEngineService = mock(IWorkflowEngineService.class);
+    IWorkflowEngineService refreshedExternalWorkflowEngineService =
+        mock(IWorkflowEngineService.class);
+    when(workflowEngineServiceFactory.createWorkflowEngineService(
+            EXTERNAL_AIRFLOW_VERSION, airflowApiClient))
+        .thenReturn(externalWorkflowEngineService, refreshedExternalWorkflowEngineService);
+    doThrow(new AppException(500, "Error calling airflow", "Connection error"))
+        .when(externalWorkflowEngineService)
+        .saveCustomOperator("operator", "operator.py");
+
+    // when
+    IWorkflowEngineService result = airflowResolver.getWorkflowEngineService(workflowMetadata);
+    result.saveCustomOperator("operator", "operator.py");
+
+    // then
+    verify(externalWorkflowEngineService).saveCustomOperator("operator", "operator.py");
+    verify(refreshedExternalWorkflowEngineService).saveCustomOperator("operator", "operator.py");
     verify(externalAirflowConfigService, times(2)).getExternalAirflowConfig(SECRET_ID);
   }
 
@@ -371,13 +392,15 @@ class AirflowResolverImplTest {
     IWorkflowEngineExtension result = airflowResolver.getWorkflowEngineExtension(workflowMetadata);
 
     // then
-    assertThat(result).isEqualTo(externalWorkflowEngineExtension);
+    assertThat(result).isNotNull();
+    result.getLatestTaskDetails("dag", "run");
+    verify(externalWorkflowEngineExtension).getLatestTaskDetails("dag", "run");
     verify(externalAirflowConfigService).getExternalAirflowConfig(SECRET_ID);
   }
 
   @Test
   void
-      should_refreshExternalWorkflowEngineExtension_when_externalAirflowSecretIsResolvedAgain() {
+      should_reuseExternalWorkflowEngineExtension_when_externalAirflowSecretIsResolvedAgain() {
     // given
     WorkflowMetadata workflowMetadata =
         getWorkflowMetadataForExternalAirflowAndPrepareAirflowApiClient();
@@ -389,11 +412,39 @@ class AirflowResolverImplTest {
         .thenReturn(externalWorkflowEngineExtension, refreshedExternalWorkflowEngineExtension);
 
     // when
-    airflowResolver.getWorkflowEngineExtension(workflowMetadata);
+    IWorkflowEngineExtension firstResult = airflowResolver.getWorkflowEngineExtension(workflowMetadata);
     IWorkflowEngineExtension result = airflowResolver.getWorkflowEngineExtension(workflowMetadata);
 
     // then
-    assertThat(result).isEqualTo(refreshedExternalWorkflowEngineExtension);
+    assertThat(result).isSameAs(firstResult);
+    verify(externalAirflowConfigService).getExternalAirflowConfig(SECRET_ID);
+  }
+
+  @Test
+  void should_refreshExternalWorkflowEngineExtensionAndRetry_when_airflowCallFails() {
+    // given
+    WorkflowMetadata workflowMetadata =
+        getWorkflowMetadataForExternalAirflowAndPrepareAirflowApiClient();
+    IWorkflowEngineExtension externalWorkflowEngineExtension = mock(IWorkflowEngineExtension.class);
+    IWorkflowEngineExtension refreshedExternalWorkflowEngineExtension =
+        mock(IWorkflowEngineExtension.class);
+    Object latestTaskDetails = new Object();
+    when(workflowEngineExtensionServiceFactory.createWorkflowEngineExtension(
+            EXTERNAL_AIRFLOW_VERSION, airflowApiClient))
+        .thenReturn(externalWorkflowEngineExtension, refreshedExternalWorkflowEngineExtension);
+    when(externalWorkflowEngineExtension.getLatestTaskDetails("dag", "run"))
+        .thenThrow(new AppException(500, "Error calling airflow", "Connection error"));
+    when(refreshedExternalWorkflowEngineExtension.getLatestTaskDetails("dag", "run"))
+        .thenReturn(latestTaskDetails);
+
+    // when
+    IWorkflowEngineExtension result = airflowResolver.getWorkflowEngineExtension(workflowMetadata);
+    Object actualLatestTaskDetails = result.getLatestTaskDetails("dag", "run");
+
+    // then
+    assertThat(actualLatestTaskDetails).isSameAs(latestTaskDetails);
+    verify(externalWorkflowEngineExtension).getLatestTaskDetails("dag", "run");
+    verify(refreshedExternalWorkflowEngineExtension).getLatestTaskDetails("dag", "run");
     verify(externalAirflowConfigService, times(2)).getExternalAirflowConfig(SECRET_ID);
   }
 

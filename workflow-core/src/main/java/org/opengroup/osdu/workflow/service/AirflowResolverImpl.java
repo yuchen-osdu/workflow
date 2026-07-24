@@ -19,16 +19,19 @@ package org.opengroup.osdu.workflow.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.opengroup.osdu.core.common.model.info.ConnectedOuterService;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.workflow.config.AirflowConfig;
 import org.opengroup.osdu.workflow.model.ExternalAirflowConfig;
+import org.opengroup.osdu.workflow.model.TriggerWorkflowResponse;
 import org.opengroup.osdu.workflow.model.WorkflowMetadata;
+import org.opengroup.osdu.workflow.model.WorkflowEngineRequest;
+import org.opengroup.osdu.workflow.model.WorkflowStatusType;
 import org.opengroup.osdu.workflow.provider.interfaces.IAirflowApiClient;
 import org.opengroup.osdu.workflow.provider.interfaces.IAirflowResolver;
 import org.opengroup.osdu.workflow.provider.interfaces.IExternalAirflowConfigService;
@@ -38,6 +41,7 @@ import org.opengroup.osdu.workflow.service.factory.AirflowApiClientFactory;
 import org.opengroup.osdu.workflow.service.factory.ExternalAirflowConfigFactory;
 import org.opengroup.osdu.workflow.service.factory.WorkflowEngineExtensionServiceFactory;
 import org.opengroup.osdu.workflow.service.factory.WorkflowEngineServiceFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -52,7 +56,9 @@ public class AirflowResolverImpl implements IAirflowResolver {
 
   private final IWorkflowEngineService internalWorkflowEngineService;
   private final IWorkflowEngineExtension internalWorkflowEngineExtension;
-  private final Set<String> externalAirflowIds = ConcurrentHashMap.newKeySet();
+  private final Map<String, IWorkflowEngineService> externalAirflowMap = new ConcurrentHashMap<>();
+  private final Map<String, IWorkflowEngineExtension> externalAirflowExtensionMap =
+      new ConcurrentHashMap<>();
 
   private final WorkflowEngineServiceFactory workflowEngineServiceFactory;
   private final WorkflowEngineExtensionServiceFactory workflowEngineExtensionServiceFactory;
@@ -68,16 +74,19 @@ public class AirflowResolverImpl implements IAirflowResolver {
             .name(INTERNAL_AIRFLOW)
             .version(internalWorkflowEngineService.getVersion().orElse(N_A))
             .build());
-    externalAirflowIds.stream()
+    externalAirflowMap.entrySet().stream()
         .map(this::getExternalAirflowConnectedOuterService)
         .forEach(connectedOuterServices::add);
     return connectedOuterServices;
   }
 
-  private ConnectedOuterService getExternalAirflowConnectedOuterService(String secretId) {
+  private ConnectedOuterService getExternalAirflowConnectedOuterService(
+      Map.Entry<String, IWorkflowEngineService> externalAirflowEntry) {
+    String secretId = externalAirflowEntry.getKey();
+    IWorkflowEngineService workflowEngineService = externalAirflowEntry.getValue();
     String version;
     try {
-      version = getExternalWorkflowEngineService(secretId).getVersion().orElse(N_A);
+      version = workflowEngineService.getVersion().orElse(N_A);
     } catch (AppException e) {
       log.error("Unable to retrieve external Airflow config for secret id: {}", secretId, e);
       version = N_A;
@@ -96,8 +105,7 @@ public class AirflowResolverImpl implements IAirflowResolver {
     if (externalAirflowSecretId.isPresent()) {
       String secretId = externalAirflowSecretId.get();
       log.debug("Using external airflow engine for secret id: {}", secretId);
-      externalAirflowIds.add(secretId);
-      return getExternalWorkflowEngineService(secretId);
+      return externalAirflowMap.computeIfAbsent(secretId, this::createRetryingWorkflowEngineService);
     }
     log.debug("Using internal airflow engine");
     return internalWorkflowEngineService;
@@ -111,13 +119,8 @@ public class AirflowResolverImpl implements IAirflowResolver {
     if (externalAirflowSecretId.isPresent()) {
       String secretId = externalAirflowSecretId.get();
       log.debug("Using external airflow engine extension for secret id: {}", secretId);
-      externalAirflowIds.add(secretId);
-      AirflowVersionAndAirflowApiClient airflowVersionAndAirflowApiClient =
-          getAirflowVersionAndApiClientFromSecret(secretId);
-
-      return workflowEngineExtensionServiceFactory.createWorkflowEngineExtension(
-          airflowVersionAndAirflowApiClient.airflowVersion(),
-          airflowVersionAndAirflowApiClient.airflowApiClient());
+      return externalAirflowExtensionMap.computeIfAbsent(
+          secretId, this::createRetryingWorkflowEngineExtension);
     }
     log.debug("Using internal airflow engine extension");
     return internalWorkflowEngineExtension;
@@ -137,11 +140,29 @@ public class AirflowResolverImpl implements IAirflowResolver {
     return Optional.empty();
   }
 
-  private IWorkflowEngineService getExternalWorkflowEngineService(String secretId) {
+  private IWorkflowEngineService createRetryingWorkflowEngineService(String secretId) {
+    return new RetryingWorkflowEngineService(secretId, createExternalWorkflowEngineService(secretId));
+  }
+
+  private IWorkflowEngineExtension createRetryingWorkflowEngineExtension(String secretId) {
+    return new RetryingWorkflowEngineExtension(
+        secretId, createExternalWorkflowEngineExtension(secretId));
+  }
+
+  private IWorkflowEngineService createExternalWorkflowEngineService(String secretId) {
     AirflowVersionAndAirflowApiClient airflowVersionAndAirflowApiClient =
         getAirflowVersionAndApiClientFromSecret(secretId);
 
     return workflowEngineServiceFactory.createWorkflowEngineService(
+        airflowVersionAndAirflowApiClient.airflowVersion(),
+        airflowVersionAndAirflowApiClient.airflowApiClient());
+  }
+
+  private IWorkflowEngineExtension createExternalWorkflowEngineExtension(String secretId) {
+    AirflowVersionAndAirflowApiClient airflowVersionAndAirflowApiClient =
+        getAirflowVersionAndApiClientFromSecret(secretId);
+
+    return workflowEngineExtensionServiceFactory.createWorkflowEngineExtension(
         airflowVersionAndAirflowApiClient.airflowVersion(),
         airflowVersionAndAirflowApiClient.airflowApiClient());
   }
@@ -165,6 +186,118 @@ public class AirflowResolverImpl implements IAirflowResolver {
 
     return new AirflowVersionAndAirflowApiClient(
         externalAirflowConfig.getAirflowVersion(), airflowApiClient);
+  }
+
+  private class RetryingWorkflowEngineService implements IWorkflowEngineService {
+
+    private final String secretId;
+    private volatile IWorkflowEngineService delegate;
+
+    private RetryingWorkflowEngineService(String secretId, IWorkflowEngineService delegate) {
+      this.secretId = secretId;
+      this.delegate = delegate;
+    }
+
+    @Override
+    public void createWorkflow(
+        WorkflowEngineRequest rq, Map<String, Object> registrationInstruction) {
+      runWithRetry(() -> delegate.createWorkflow(rq, registrationInstruction));
+    }
+
+    @Override
+    public void deleteWorkflow(WorkflowEngineRequest rq) {
+      runWithRetry(() -> delegate.deleteWorkflow(rq));
+    }
+
+    @Override
+    public void saveCustomOperator(String customOperatorDefinition, String fileName) {
+      runWithRetry(() -> delegate.saveCustomOperator(customOperatorDefinition, fileName));
+    }
+
+    @Override
+    public TriggerWorkflowResponse triggerWorkflow(
+        WorkflowEngineRequest rq, Map<String, Object> context) {
+      return callWithRetry(() -> delegate.triggerWorkflow(rq, context));
+    }
+
+    @Override
+    public WorkflowStatusType getWorkflowRunStatus(WorkflowEngineRequest rq) {
+      return callWithRetry(() -> delegate.getWorkflowRunStatus(rq));
+    }
+
+    @Override
+    public Optional<String> getVersion() {
+      Optional<String> version = delegate.getVersion();
+      if (version.isEmpty() || !N_A.equals(version.get())) {
+        return version;
+      }
+      refresh();
+      return delegate.getVersion();
+    }
+
+    private <T> T callWithRetry(RetryableCall<T> call) {
+      return callExternalAirflowWithRetry(secretId, call, this::refresh);
+    }
+
+    private void runWithRetry(Runnable call) {
+      callWithRetry(
+          () -> {
+            call.run();
+            return null;
+          });
+    }
+
+    private synchronized void refresh() {
+      delegate = createExternalWorkflowEngineService(secretId);
+    }
+  }
+
+  private class RetryingWorkflowEngineExtension implements IWorkflowEngineExtension {
+
+    private final String secretId;
+    private volatile IWorkflowEngineExtension delegate;
+
+    private RetryingWorkflowEngineExtension(String secretId, IWorkflowEngineExtension delegate) {
+      this.secretId = secretId;
+      this.delegate = delegate;
+    }
+
+    @Override
+    public Object getLatestTaskDetails(String dagName, String runId) {
+      return callExternalAirflowWithRetry(
+          secretId, () -> delegate.getLatestTaskDetails(dagName, runId), this::refresh);
+    }
+
+    private synchronized void refresh() {
+      delegate = createExternalWorkflowEngineExtension(secretId);
+    }
+  }
+
+  @FunctionalInterface
+  private interface RetryableCall<T> {
+    T execute();
+  }
+
+  private <T> T callExternalAirflowWithRetry(
+      String secretId, RetryableCall<T> call, Runnable refresh) {
+    try {
+      return call.execute();
+    } catch (AppException e) {
+      if (shouldRefreshExternalAirflowConfig(e)) {
+        log.warn(
+            "Unable to call external Airflow for secret id: {}. Refreshing config.", secretId, e);
+        refresh.run();
+        return call.execute();
+      }
+      throw e;
+    }
+  }
+
+  private boolean shouldRefreshExternalAirflowConfig(AppException e) {
+    int statusCode = e.getError().getCode();
+    return statusCode == HttpStatus.UNAUTHORIZED.value()
+        || statusCode == HttpStatus.FORBIDDEN.value()
+        || statusCode >= HttpStatus.INTERNAL_SERVER_ERROR.value();
   }
 
   private record AirflowVersionAndAirflowApiClient(
