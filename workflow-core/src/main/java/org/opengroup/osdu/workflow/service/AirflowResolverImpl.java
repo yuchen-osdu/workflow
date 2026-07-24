@@ -25,6 +25,7 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.opengroup.osdu.core.common.model.info.ConnectedOuterService;
+import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.workflow.config.AirflowConfig;
 import org.opengroup.osdu.workflow.model.ExternalAirflowConfig;
 import org.opengroup.osdu.workflow.model.WorkflowMetadata;
@@ -68,14 +69,23 @@ public class AirflowResolverImpl implements IAirflowResolver {
             .version(internalWorkflowEngineService.getVersion().orElse(N_A))
             .build());
     externalAirflowIds.stream()
-        .map(
-            secretId ->
-                ConnectedOuterService.builder()
-                    .name(EXTERNAL_AIRFLOW + secretId)
-                    .version(getExternalWorkflowEngineService(secretId).getVersion().orElse(N_A))
-                    .build())
+        .map(this::getExternalAirflowConnectedOuterService)
         .forEach(connectedOuterServices::add);
     return connectedOuterServices;
+  }
+
+  private ConnectedOuterService getExternalAirflowConnectedOuterService(String secretId) {
+    String version;
+    try {
+      version = getExternalWorkflowEngineService(secretId).getVersion().orElse(N_A);
+    } catch (AppException e) {
+      log.error("Unable to retrieve external Airflow config for secret id: {}", secretId, e);
+      version = N_A;
+    }
+    return ConnectedOuterService.builder()
+        .name(EXTERNAL_AIRFLOW + secretId)
+        .version(version)
+        .build();
   }
 
   @Override

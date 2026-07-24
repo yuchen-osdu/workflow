@@ -34,6 +34,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.opengroup.osdu.core.common.model.info.ConnectedOuterService;
+import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.workflow.config.AirflowConfig;
 import org.opengroup.osdu.workflow.model.ExternalAirflowConfig;
 import org.opengroup.osdu.workflow.model.WorkflowMetadata;
@@ -138,6 +139,47 @@ class AirflowResolverImplTest {
     when(externalWorkflowEngineService.getVersion()).thenReturn(Optional.empty());
     WorkflowMetadata workflowMetadata =
         getWorkflowMetadataForExternalAirflowAndPrepareAirflowApiClient();
+    when(workflowEngineServiceFactory.createWorkflowEngineService(
+            EXTERNAL_AIRFLOW_VERSION, airflowApiClient))
+        .thenReturn(externalWorkflowEngineService);
+
+    // when
+    airflowResolver.getWorkflowEngineService(workflowMetadata);
+    List<ConnectedOuterService> result =
+        airflowResolver.getConnectedWorkflowEngineServicesVersions();
+
+    // then
+    assertThat(result).hasSize(2);
+    assertThat(result.get(1).getName()).isEqualTo(EXTERNAL_AIRFLOW + SECRET_ID);
+    assertThat(result.get(1).getVersion()).isEqualTo(N_A);
+  }
+
+  @Test
+  void should_returnNotAvailable_when_externalAirflowSecretIsUnreachable() {
+    // given
+    when(internalWorkflowEngineService.getVersion())
+        .thenReturn(Optional.of(INTERNAL_AIRFLOW_VERSION));
+
+    Map<String, Object> registrationInstructions = new HashMap<>();
+    registrationInstructions.put(EXTERNAL_AIRFLOW_SECRET, SECRET_ID);
+    WorkflowMetadata workflowMetadata =
+        WorkflowMetadata.builder().registrationInstructions(registrationInstructions).build();
+    ExternalAirflowConfig externalAirflowConfig =
+        ExternalAirflowConfig.builder()
+            .airflowVersion(EXTERNAL_AIRFLOW_VERSION)
+            .airflowApiClientType(API_CLIENT_TYPE)
+            .configMap(Collections.emptyMap())
+            .build();
+    when(externalAirflowConfigService.getExternalAirflowConfig(SECRET_ID))
+        .thenReturn(externalAirflowConfig)
+        .thenThrow(new AppException(500, "Secret unavailable", "Unable to retrieve secret"));
+    AirflowConfig airflowConfig = new AirflowConfig();
+    when(externalAirflowConfigFactory.createExternalAirflowConfig(
+            API_CLIENT_TYPE, Collections.emptyMap()))
+        .thenReturn(airflowConfig);
+    when(airflowApiClientFactory.createAirflowApiClient(API_CLIENT_TYPE, airflowConfig))
+        .thenReturn(airflowApiClient);
+    IWorkflowEngineService externalWorkflowEngineService = mock(IWorkflowEngineService.class);
     when(workflowEngineServiceFactory.createWorkflowEngineService(
             EXTERNAL_AIRFLOW_VERSION, airflowApiClient))
         .thenReturn(externalWorkflowEngineService);
