@@ -17,12 +17,5 @@
 
 package org.opengroup.osdu.workflow.util.v3;
 
-import lombok.Builder;
-import lombok.Data;
-
-@Data
-@Builder
-public class CreatedWorkflowRun {
-  private String workflowName;
-  private String workflowRunId;
+public record CreatedWorkflowRun(String workflowName, String workflowRunId) {
 }
