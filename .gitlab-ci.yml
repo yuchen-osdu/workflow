@@ -19,6 +19,7 @@ variables:
   AZURE_HELM_SUBDIR: osdu-azure/workflow
   # End azure specific variables
   ACCEPTANCE_TEST_DIR: "workflow-acceptance-test"
+  EXPOSE_FEATUREFLAG_ENABLED: "false"
 
 include:
   - project: "osdu/platform/ci-cd-pipelines"
@@ -32,6 +33,9 @@ include:
 
   - project: "osdu/platform/ci-cd-pipelines"
     file: "scanners/fossa-maven.yml"
+
+  - project: "osdu/platform/ci-cd-pipelines"
+    file: "reporting/reporting.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
     file: "publishing/pages.yml"
