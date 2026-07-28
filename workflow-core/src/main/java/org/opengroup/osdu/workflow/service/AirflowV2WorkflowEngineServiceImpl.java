@@ -108,8 +108,15 @@ public class AirflowV2WorkflowEngineServiceImpl extends AbstractAirflowWorkflowE
 
   @Override
   public Optional<String> getVersion() {
-    ClientResponse clientResponse =
-        getAirflowApiClient().callAirflow(HttpMethod.GET, AIRFLOW_VERSION_ENDPOINT, null, null, null);
+    ClientResponse clientResponse;
+    try {
+      clientResponse =
+          getAirflowApiClient()
+              .callAirflow(HttpMethod.GET, AIRFLOW_VERSION_ENDPOINT, null, null, null);
+    } catch (AppException e) {
+      log.error("Unable to retrieve Airflow version.", e);
+      return Optional.of(NOT_AVAILABLE);
+    }
     try {
       ObjectMapper om = new ObjectMapper();
       String body = clientResponse.getResponseBody().toString();
@@ -157,4 +164,3 @@ public class AirflowV2WorkflowEngineServiceImpl extends AbstractAirflowWorkflowE
     inputData.put(KEY_EXECUTION_CONTEXT, executionContext);
   }
 }
-

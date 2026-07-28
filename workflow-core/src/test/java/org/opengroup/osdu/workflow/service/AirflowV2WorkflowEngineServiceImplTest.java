@@ -216,4 +216,19 @@ class AirflowV2WorkflowEngineServiceImplTest {
     assertTrue(version.isPresent());
     assertEquals(AirflowV2WorkflowEngineServiceImpl.NOT_AVAILABLE, version.get());
   }
+
+  @Test
+  void should_ReturnNotAvailable_when_GetVersionAirflowCallFails() {
+    when(airflowApiClient.callAirflow(any(), any(), any(), any(), any()))
+        .thenThrow(
+            new AppException(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Error calling airflow",
+                "Airflow endpoint is unavailable"));
+
+    Optional<String> version = service.getVersion();
+
+    assertTrue(version.isPresent());
+    assertEquals(AirflowV2WorkflowEngineServiceImpl.NOT_AVAILABLE, version.get());
+  }
 }
