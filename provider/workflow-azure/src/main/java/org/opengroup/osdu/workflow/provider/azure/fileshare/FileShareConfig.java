@@ -13,6 +13,7 @@ public class FileShareConfig {
   @Deprecated
   private String shareName;
   private String airflow2ShareName;
+  private String airflow3ShareName;
   private String dagsFolder;
   private String customOperatorsFolder;
 }
