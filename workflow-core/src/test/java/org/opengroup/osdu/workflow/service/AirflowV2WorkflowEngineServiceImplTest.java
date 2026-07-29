@@ -58,7 +58,7 @@ class AirflowV2WorkflowEngineServiceImplTest {
           "{\"%s\":\"%s\",\"%s\":\"%s\"}",
           AirflowV2WorkflowEngineServiceImpl.EXECUTION_DATE_PARAMETER_NAME,
           RESPONSE_EXECUTION_DATE,
-          AirflowV2WorkflowEngineServiceImpl.RUN_ID_PARAMETER_NAME_STABLE,
+          AirflowV2WorkflowEngineServiceImpl.RUN_ID_PARAMETER_NAME,
           RESPONSE_DAG_RUN_ID);
   private static final String EXECUTION_CONTEXT = "execution_context";
   private static final String KEY_USER_ID = "userId";

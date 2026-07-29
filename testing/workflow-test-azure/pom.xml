@@ -33,7 +33,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.main.basedir>${project.basedir}</project.main.basedir>
-        <jackson.version>2.10.1</jackson.version>
+        <jackson.version>2.13.2</jackson.version>
         <skipTests>false</skipTests>
         <test.data.file.name>testData.json</test.data.file.name>
         <test.data.directory>${project.build.directory}</test.data.directory>

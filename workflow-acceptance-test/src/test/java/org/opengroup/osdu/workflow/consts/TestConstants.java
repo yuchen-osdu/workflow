@@ -41,4 +41,10 @@ public class TestConstants {
 			EnvLoader.get("TEST_DAG_NAME_EXTERNAL_AIRFLOW", CREATE_WORKFLOW_WORKFLOW_NAME);
 	public static final String EXTERNAL_AIRFLOW_SECRET =
 			EnvLoader.get("EXTERNAL_AIRFLOW_SECRET", "airflow-workflow-tests");
+
+	// Airflow 3 engine assertions
+	public static final boolean AIRFLOW3_TESTS_ENABLED =
+			Boolean.parseBoolean(EnvLoader.get("AIRFLOW3_TESTS_ENABLED", "false"));
+	public static final String AIRFLOW3_EXPECTED_VERSION_PREFIX =
+			EnvLoader.get("AIRFLOW3_EXPECTED_VERSION_PREFIX", "3");
 }

@@ -161,7 +161,16 @@ public class WorkflowEngineServiceV2ImplTest {
   private AirflowV2WorkflowEngineUtil engineUtil;
 
   @Mock
+  private org.opengroup.osdu.workflow.provider.azure.utils.airflow.AirflowEngineUtilSelector engineUtilSelector;
+
+  @Mock
   private ObjectMapper om;
+
+  @org.junit.jupiter.api.BeforeEach
+  void routeSelectorToEngineUtil() {
+    lenient().when(engineUtilSelector.utilFor(any())).thenReturn(engineUtil);
+    lenient().when(engineUtilSelector.getDefaultUtil()).thenReturn(engineUtil);
+  }
 
   @Test
   public void testCreateWorkflowWithDagContent() {

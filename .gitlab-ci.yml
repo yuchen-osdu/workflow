@@ -105,6 +105,18 @@ azure_containerize:
 azure_test:
   image: community.opengroup.org:5555/osdu/platform/deployment-and-operations/base-containers-azure/azure-maven17:v0.0.1
 
+# Install branch workflow-core into .m2 first so the standalone azure coverage build
+# resolves AF3 classes not yet in the cached core snapshot.
+azure_code_coverage:
+  script:
+    - mvn -B -Pcore -pl workflow-core -am install -DskipTests -Denforcer.skip=true
+    - mvn clean test jacoco:report -f $AZURE_BUILD_SUBDIR/pom.xml
+    - cat $AZURE_BUILD_SUBDIR/target/site/jacoco/index.html | grep -o '<tfoot>.*</tfoot>'
+    - coverageText=$(cat $AZURE_BUILD_SUBDIR/target/site/jacoco/index.html | grep -o 'Total[^%]*%' | sed 's/<.*>/ /; s/Total/Jacoco Coverage Total:/')
+    - coverageValue=$(echo $coverageText | grep -o -E "[0-9]+")
+    - echo "AZURE_COVERAGE=$coverageValue" >> azure_code_coverage.env
+    - echo "Code coverage obtained ${coverageValue}"
+
 aws-test-java:
   image: $CI_REGISTRY/osdu/platform/deployment-and-operations/base-containers-aws/aws-maven/aws-maven:v2.0
 

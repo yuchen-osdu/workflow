@@ -37,6 +37,22 @@ Defined in default application property file but possible to override:
 | `GROUP_ID`                         | ex `group`                                    | The id of the groups is created. The default (and recommended for `jdbc`) value is `group`                                                             | no         | -                                   |
 
 
+### Airflow engine configuration (Airflow 2 / Airflow 3)
+
+The Workflow Service can talk to Airflow 2 (`/api/v1`) and, side-by-side, to Airflow 3 (`/api/v2`).
+The engine is selected per deployment; each run persists the engine that owns it, so in-flight
+Airflow 2 runs keep resolving on Airflow 2 while new runs go to the configured engine. Legacy runs
+(created before engine-ownership metadata existed) fall back to Airflow 2.
+
+| name | value | description | sensitive? | source |
+|------|-------|-------------|------------|--------|
+| `OSDU_AIRFLOW_VERSION` | `airflow2` (default) or `airflow3` | Selects the Airflow engine for **new** workflow triggers. Overrides the legacy `OSDU_AIRFLOW_VERSION2` toggle when set. | no | - |
+| `OSDU_AIRFLOW_AIRFLOW3_URL` | ex `http://airflow3-api-server:8080` | Airflow 3 `/api/v2` endpoint. Required only when `OSDU_AIRFLOW_VERSION=airflow3`; unused otherwise. | no | - |
+| `OSDU_AIRFLOW_AIRFLOW3_USERNAME` | `******` | Airflow 3 user for JWT auth against the `/api/v2` auth manager (SimpleAuthManager / FabAuthManager). | yes | - |
+| `OSDU_AIRFLOW_AIRFLOW3_PASSWORD` | `******` | Airflow 3 password for JWT auth. | yes | - |
+| `FEATURE_FLAG_ALLOW_HTTP_AIRFLOW` | `true` (default) or `false` | Allows plain HTTP to the Airflow 3 (JwtAuth) client. Defaults to `true` because in-mesh Airflow is secured by Istio mTLS. Set `false` to require HTTPS (e.g. an external Airflow over a public network). | no | - |
+
+
 These variables define service behavior, and are used to switch between `Reference` or `Google Cloud` environments, their overriding
 and usage in the mixed mode were not tested. Usage of spring profiles is preferred.
 

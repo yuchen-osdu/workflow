@@ -48,6 +48,8 @@ Or tokens can be used directly (`{USER_TYPE}_TOKEN`):
 | `WORKFLOW_NAME_EXTERNAL_AIRFLOW` | ex `external-airflow-accept-test` | Workflow name prefix used by external Airflow tests. Defaults to `external-airflow-accept-test`. | no |
 | `TEST_DAG_NAME_EXTERNAL_AIRFLOW` | ex `airflow_monitoring` | DAG name used by external Airflow tests. Defaults to `TEST_DAG_NAME`. | no |
 | `EXTERNAL_AIRFLOW_SECRET` | ex `airflow-workflow-tests` | Secret name containing external Airflow connection parameters. Defaults to `airflow-workflow-tests`. | no |
+| `AIRFLOW3_TESTS_ENABLED` | `true` OR `false` | Run tests annotated with `@TestAirflow3`, which assert Airflow 3-specific behaviour (e.g. `/info` reports the Airflow 3 engine version). Set to `true` only when the Workflow Service under test targets Airflow 3. Defaults to `false`. | no |
+| `AIRFLOW3_EXPECTED_VERSION_PREFIX` | ex `3` or `3.2.2` | Expected Airflow 3 version prefix asserted by the `@TestAirflow3` `/info` test. Defaults to `3`. | no |
 
 ### Entitlements roles
 
