@@ -18,6 +18,7 @@
 package org.opengroup.osdu.workflow.service;
 
 import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -40,6 +41,7 @@ import org.opengroup.osdu.workflow.model.ClientResponse;
 import org.opengroup.osdu.workflow.provider.interfaces.IAirflowApiClient;
 import org.opengroup.osdu.workflow.provider.interfaces.IWorkflowEngineExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.util.UriUtils;
 
 /**
  * Shared base for the Airflow 2 ({@code api/v1}) and Airflow 3 ({@code api/v2}) run-details
@@ -108,7 +110,9 @@ public abstract class BaseAirflowWorkflowEngineExtension implements IWorkflowEng
 
   private List<Map<String, String>> getDagRunTasks(String dagName, String runId)
       throws JsonProcessingException {
-    String taskInstancesEndpoint = format(taskInstancesEndpointTemplate(), dagName, runId);
+    String taskInstancesEndpoint =
+        format(
+            taskInstancesEndpointTemplate(), encodePathSegment(dagName), encodePathSegment(runId));
     String tasksErrMsg = format(GET_RUN_TASKS_ERROR_MESSAGE, runId, dagName);
 
     ClientResponse taskListResponse =
@@ -134,7 +138,12 @@ public abstract class BaseAirflowWorkflowEngineExtension implements IWorkflowEng
 
   private List<String> getTaskXcomKeys(String dagName, String runId, String latestTaskId)
       throws JsonProcessingException {
-    String taskXcomEntriesEndpoint = format(xcomEntriesEndpointTemplate(), dagName, runId, latestTaskId);
+    String taskXcomEntriesEndpoint =
+        format(
+            xcomEntriesEndpointTemplate(),
+            encodePathSegment(dagName),
+            encodePathSegment(runId),
+            encodePathSegment(latestTaskId));
     String xcomEntriesErrMsg = format(GET_TASKS_XCOM_ERROR_MESSAGE, latestTaskId);
 
     ClientResponse entriesResponse =
@@ -164,7 +173,13 @@ public abstract class BaseAirflowWorkflowEngineExtension implements IWorkflowEng
     String xcomValErrMsg = format(GET_XCOM_VALUES_ERROR_MESSAGE, latestTaskId);
     Map<String, String> xcomKeyVal = new HashMap<>();
     for (String xcomKey : xcomKeys) {
-      String xcomValueEndpoint = format(xcomValuesEndpointTemplate(), dagName, runId, latestTaskId, xcomKey);
+      String xcomValueEndpoint =
+          format(
+              xcomValuesEndpointTemplate(),
+              encodePathSegment(dagName),
+              encodePathSegment(runId),
+              encodePathSegment(latestTaskId),
+              encodePathSegment(xcomKey));
       ClientResponse xcomValueResponse =
           airflowApiClient.callAirflow(HttpMethod.GET, xcomValueEndpoint, null, null, xcomValErrMsg);
       JsonNode xcomValue =
@@ -188,5 +203,9 @@ public abstract class BaseAirflowWorkflowEngineExtension implements IWorkflowEng
                     HttpStatus.INTERNAL_SERVER_ERROR.value(),
                     "Unable to locate latest task.",
                     String.format("Provided tasks: %s", StringUtils.join(tasksMap))));
+  }
+
+  private static String encodePathSegment(String pathSegment) {
+    return UriUtils.encodePathSegment(pathSegment, UTF_8);
   }
 }
