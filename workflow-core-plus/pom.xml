@@ -22,12 +22,12 @@
     <parent>
         <groupId>org.opengroup.osdu</groupId>
         <artifactId>os-workflow</artifactId>
-        <version>0.30.0-SNAPSHOT</version>
+        <version>0.30.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>workflow-core-plus</artifactId>
-    <version>0.30.0-SNAPSHOT</version>
+    <version>0.30.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>workflow-core-plus</name>
