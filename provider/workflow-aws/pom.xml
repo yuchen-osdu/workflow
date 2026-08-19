@@ -31,7 +31,11 @@
   <description>AWS implementation of Workflow service APIs</description>
 
   <properties>
-    <aws.sdk.version>2.25.11</aws.sdk.version>
+    <!-- Aligned with the AWS SDK v2 version os-core-lib-aws:8.0.3 already pulls in for
+         s3/sns/dynamodb (see its dependency tree; sqs is no longer used by this module's code
+         as of the Airflow 3 migration Phase 2 deletion) so software.amazon.awssdk:mwaa shares the
+         same sdk-core/aws-core/regions/auth artifacts instead of forcing a conflicting version. -->
+    <aws.sdk.version>2.32.7</aws.sdk.version>
     <log4j2.version>2.17.1</log4j2.version>
   </properties>
 
@@ -53,6 +57,14 @@
     <dependency>
       <groupId>org.opengroup.osdu</groupId>
       <artifactId>workflow-core</artifactId>
+    </dependency>
+
+    <!-- Needed for MWAA SigV4 InvokeRestApi client
+         Specific to MWAA and workflow service, so no real incentive to add it to the core aws lib -->
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>mwaa</artifactId>
+      <version>${aws.sdk.version}</version>
     </dependency>
 
     <!-- Third party Apache 2.0 license packages -->
