@@ -38,7 +38,6 @@ import org.opengroup.osdu.core.aws.v2.dynamodb.model.GsiQueryRequest;
 import org.opengroup.osdu.core.aws.v2.dynamodb.model.QueryPageResult;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-import org.opengroup.osdu.workflow.aws.config.AwsServiceConfig;
 import org.opengroup.osdu.workflow.aws.util.dynamodb.converters.WorkflowRunDoc;
 import org.opengroup.osdu.workflow.exception.WorkflowRunNotFoundException;
 import org.opengroup.osdu.workflow.model.WorkflowRun;
@@ -73,17 +72,14 @@ class AwsWorkflowRunRepositoryTest {
     @Mock
     private DynamoDBQueryHelper<WorkflowRunDoc> queryHelper;
 
-    @Mock
-    private AwsServiceConfig awsServiceConfig;
-
     @BeforeEach
     void setup() {
         when(headers.getPartitionIdWithFallbackToAccountId()).thenReturn(PARTITION);
         when(queryHelperFactory.createQueryHelper(
                 headers, TABLEPARAMETERPATH, WorkflowRunDoc.class))
                 .thenReturn(queryHelper);
-        
-        repo = new AwsWorkflowRunRepository(queryHelperFactory, TABLEPARAMETERPATH, headers, awsServiceConfig);
+
+        repo = new AwsWorkflowRunRepository(queryHelperFactory, TABLEPARAMETERPATH, headers);
     }
 
 
@@ -286,22 +282,6 @@ class AwsWorkflowRunRepositoryTest {
         // assert
         Assertions.assertNotNull(result);
         Assertions.assertEquals(1, result.size());
-    }
-
-    @Test
-    void testRunExistsTrue() {
-        when(queryHelper.getItem(anyString(), anyString())).thenReturn(Optional.of(new WorkflowRunDoc()));
-
-        // assert
-        Assertions.assertTrue(repo.runExists(RUNID));
-    }
-
-    @Test
-    void testRunExistsFalse() {
-        when(queryHelper.getItem(anyString(), anyString())).thenReturn(Optional.empty());
-
-        // assert
-        Assertions.assertFalse(repo.runExists(RUNID));
     }
 
 }

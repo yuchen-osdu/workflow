@@ -29,7 +29,6 @@ import org.opengroup.osdu.core.aws.v2.dynamodb.model.QueryPageResult;
 import org.opengroup.osdu.core.aws.v2.dynamodb.util.RequestBuilderUtil;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
-import org.opengroup.osdu.workflow.aws.config.AwsServiceConfig;
 import org.opengroup.osdu.workflow.aws.util.dynamodb.converters.WorkflowRunDoc;
 import org.opengroup.osdu.workflow.exception.WorkflowRunNotFoundException;
 import org.opengroup.osdu.workflow.model.WorkflowRun;
@@ -54,7 +53,6 @@ public class AwsWorkflowRunRepository implements IWorkflowRunRepository {
     private static final String WORKFLOWRUN_HASHKEY = "runId";
     private static final String GSI_INDEX_NAME = "workflowName-tenant-index";
 
-    private final AwsServiceConfig config;
     private final DpsHeaders headers;
     private final DynamoDBQueryHelper<WorkflowRunDoc> queryHelper;
 
@@ -62,13 +60,12 @@ public class AwsWorkflowRunRepository implements IWorkflowRunRepository {
     public AwsWorkflowRunRepository(
             IDynamoDBQueryHelperFactory queryHelperFactory,
             @Value("${aws.dynamodb.workflowRunTable.ssm.relativePath}") String workflowRunTableParameterRelativePath,
-            DpsHeaders headers, AwsServiceConfig config) {
+            DpsHeaders headers) {
         this.headers = headers;
         this.queryHelper = queryHelperFactory.createQueryHelper(
                 headers,
                 workflowRunTableParameterRelativePath,
                 WorkflowRunDoc.class);
-        this.config = config;
     }
 
     @Override
@@ -214,11 +211,6 @@ public class AwsWorkflowRunRepository implements IWorkflowRunRepository {
         } while (cursor != null);
 
         return runs;
-    }
-
-    public boolean runExists(String runId) {
-        String dataPartitionId = headers.getPartitionIdWithFallbackToAccountId();
-        return queryHelper.getItem(runId, dataPartitionId).isPresent();
     }
 
     private boolean isValidWorkflowRun(String runId, String workflowName, String dataPartitionId) {

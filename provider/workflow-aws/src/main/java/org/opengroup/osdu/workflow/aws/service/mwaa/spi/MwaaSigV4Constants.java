@@ -1,12 +1,12 @@
 /**
 * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-* 
+*
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
-* 
+*
 *      http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,17 +14,19 @@
 * limitations under the License.
 */
 
-package org.opengroup.osdu.workflow.aws.config;
+package org.opengroup.osdu.workflow.aws.service.mwaa.spi;
 
+/**
+ * Shared SPI type-discriminator constant for the MWAA SigV4 provider pair ({@link
+ * MwaaSigV4ApiClientServiceProvider}, {@link MwaaSigV4ConfigServiceProvider}). Both providers
+ * must agree on this value: it is the {@code airflowApiClientType} that {@code
+ * AirflowApiClientFactory} and the Airflow config factory use to select this pair, so it is
+ * declared once here instead of being duplicated in each provider.
+ */
+public final class MwaaSigV4Constants {
 
-public class AwsAirflowApiMode {
+  public static final String MWAA_SIG_V4 = "mwaaSigV4";
 
-  private AwsAirflowApiMode() {
-    //Private Constructor
+  private MwaaSigV4Constants() {
   }
-
-    public static final String HTTP = "http";
-    public static final String SQS = "sqs";    
-  
-  }
-  
+}
