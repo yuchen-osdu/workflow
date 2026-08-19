@@ -29,7 +29,7 @@
 
   <groupId>org.opengroup.osdu</groupId>
   <artifactId>workflow-test</artifactId>
-  <version>0.30.1-SNAPSHOT</version>
+  <version>0.31.0-SNAPSHOT</version>
   <description>Workflow Service Integration Test Root Project</description>
   <packaging>pom</packaging>
 
