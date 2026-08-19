@@ -12,4 +12,4 @@ RUN addgroup -g 10001 -S nonroot \
 RUN chown -R 10001:10001 /opt
 USER 10001:10001
 
-CMD ["/bin/bash", "-c", "./bootstrap.sh && sleep 365d"]
+CMD ["/bin/bash", "-c", "./bootstrap.sh"]

@@ -42,3 +42,42 @@ gc-acceptance-test:
     EXTERNAL_AIRFLOW_TESTS_ENABLED: true
     TEST_DAG_NAME_EXTERNAL_AIRFLOW: airflow_monitoring
     EXTERNAL_AIRFLOW_SECRET: external_airflow_for_acceptance_tests
+
+.gc_verify_bootstrap:
+  script:
+    - |
+      if [[ "$GC_ENABLE_BOOTSTRAP" == "true" ]]; then
+        echo "----- Verify Bootstrap -----"
+        if kubectl get job "$GC_SERVICE-bootstrap" -n "$GC_HELM_NAMESPACE" >/dev/null 2>&1; then
+          BOOTSTRAP_JOB_NAME="$GC_SERVICE-bootstrap"
+        elif kubectl get job "$GC_SERVICE-bootstrap-spot" -n "$GC_HELM_NAMESPACE" >/dev/null 2>&1; then
+          BOOTSTRAP_JOB_NAME="$GC_SERVICE-bootstrap-spot"
+        else
+          echo "ERROR: Bootstrap job $GC_SERVICE-bootstrap or $GC_SERVICE-bootstrap-spot not found in namespace $GC_HELM_NAMESPACE"
+          exit 1
+        fi
+        echo "Using bootstrap job: $BOOTSTRAP_JOB_NAME"
+        set +e
+        kubectl wait --for=condition=complete job/$BOOTSTRAP_JOB_NAME -n $GC_HELM_NAMESPACE --timeout=900s
+        BOOTSTRAP_JOB_EXIT_CODE=$?
+        set -e
+        if [[ $BOOTSTRAP_JOB_EXIT_CODE -ne 0 ]]; then
+          echo "Bootstrap job failed with exit code $BOOTSTRAP_JOB_EXIT_CODE"
+          echo "----- Describing bootstrap job -----"
+          kubectl describe job "$BOOTSTRAP_JOB_NAME" -n "$GC_HELM_NAMESPACE"
+          echo "----- Getting bootstrap pods -----"
+          kubectl get pods -n "$GC_HELM_NAMESPACE" -l app="$GC_SERVICE-bootstrap"
+          echo "----- Describing pod -----"
+          POD=$(kubectl get pods -n "$GC_HELM_NAMESPACE" -l app="$GC_SERVICE-bootstrap" \
+            --no-headers --sort-by='.metadata.creationTimestamp' \
+            -o custom-columns=:metadata.name | tail -1)
+          if [[ -n "$POD" ]]; then
+            kubectl describe pod "$POD" -n "$GC_HELM_NAMESPACE"
+            echo "----- Logs from bootstrap pod -----"
+            kubectl logs "$POD" -n "$GC_HELM_NAMESPACE"
+          else
+            echo "No pod found for $BOOTSTRAP_JOB_NAME"
+          fi
+          exit 1
+        fi
+      fi
