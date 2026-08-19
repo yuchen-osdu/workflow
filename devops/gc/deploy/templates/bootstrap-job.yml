@@ -13,21 +13,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
   labels:
     app: {{ printf "%s-bootstrap" .Values.conf.appName | quote }}
     type: bootstrap
   name: {{ printf "%s-bootstrap" .Values.conf.appName | quote }}
   namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
 spec:
-  strategy:
-    type: "Recreate"
-  replicas: 1
-  selector:
-    matchLabels:
-      app: {{ printf "%s-bootstrap" .Values.conf.appName | quote }}
   template:
     metadata:
       labels:
@@ -42,11 +39,6 @@ spec:
       containers:
         - name: {{ printf "%s-bootstrap" .Values.conf.appName | quote }}
           image: {{ .Values.data.bootstrapImage | quote }}
-          readinessProbe:
-            exec:
-              command:
-              - cat
-              - /tmp/bootstrap_ready
           imagePullPolicy: {{ .Values.data.imagePullPolicy | quote }}
           envFrom:
           - configMapRef:
@@ -54,4 +46,5 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
+      restartPolicy: OnFailure
       serviceAccountName: {{ .Values.data.bootstrapServiceAccountName | quote }}
