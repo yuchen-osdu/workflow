@@ -22,12 +22,12 @@
   <parent>
     <groupId>org.opengroup.osdu</groupId>
     <artifactId>os-workflow</artifactId>
-    <version>0.30.1-SNAPSHOT</version>
+    <version>0.30.2-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
   <artifactId>workflow-gc</artifactId>
-  <version>0.30.1-SNAPSHOT</version>
+  <version>0.30.2-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>workflow-gc</name>
@@ -42,7 +42,7 @@
     <dependency>
       <groupId>org.opengroup.osdu</groupId>
       <artifactId>workflow-core-plus</artifactId>
-      <version>0.30.1-SNAPSHOT</version>
+      <version>0.30.2-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback.contrib</groupId>
