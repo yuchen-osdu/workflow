@@ -18,7 +18,7 @@ data:
   schemaHost: "http://schema"
   legalHost: "http://legal"
   osduAirflowUrl: "http://airflow:8080"
-  airflowVersion3Enabled: true
+  airflowVersion: "airflow3"
   composerClient: "IAM"
   workflowHost: "http://workflow"
   otelExporterEndpoint: "http://opentelemetry-collector.opentelemetry.svc.cluster.local:4318"
