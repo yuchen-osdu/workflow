@@ -17,7 +17,6 @@
 
 package org.opengroup.osdu.workflow.provider.gcp.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
@@ -28,6 +27,7 @@ import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.IdTokenCredentials;
 import com.google.auth.oauth2.IdTokenProvider;
+import jakarta.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -36,7 +36,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -44,17 +43,12 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.opengroup.osdu.workflow.exception.GoogleIamException;
 import org.opengroup.osdu.workflow.exception.RuntimeException;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.stereotype.Service;
 
-@Service
-@ConditionalOnBean(ComposerIaapClient.class)
 @RequiredArgsConstructor
 public class GoogleIapHelper {
 
   static final String IAM_SCOPE = "https://www.googleapis.com/auth/iam";
   final HttpTransport httpTransport = new NetHttpTransport();
-  private final ObjectMapper objectMapper;
 
   /**
    * Fetch Google IAP client ID

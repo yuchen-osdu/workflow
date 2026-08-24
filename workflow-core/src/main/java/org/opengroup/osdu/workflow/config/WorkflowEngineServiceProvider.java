@@ -71,8 +71,13 @@ public class WorkflowEngineServiceProvider {
     String configuredVersion = airflowEngineVersionProvider.getConfiguredVersion();
 
     if (AirflowEngineVersions.V3.equals(configuredVersion)) {
-      requireAirflow3BackendConfigured();
-      return buildPerRunEngine();
+      if (isAirflow3BackendConfigured()) {
+        requireAirflow3BackendCredentials();
+        return buildPerRunEngine();
+      }
+      log.info("Creating single Airflow 3 workflow engine with default airflowApiClient");
+      return workflowEngineServiceFactory.createWorkflowEngineService(
+          configuredVersion, airflowApiClient);
     }
 
     log.info("Creating single workflow engine for airflow version: {}", configuredVersion);
@@ -129,7 +134,7 @@ public class WorkflowEngineServiceProvider {
 
   /**
    * Per-run-version internal run-details extensions (drive {@code /latestInfo}). Airflow 2 is always
-   * available; Airflow 3's {@code api/v2} extension (JWT client) is added when enabled, so a run's
+   * available; Airflow 3's {@code api/v2} extension is added when enabled, so a run's
    * {@code /latestInfo} is resolved against the engine that owns it. Legacy/null runs use Airflow 2.
    */
   @Bean
@@ -140,10 +145,11 @@ public class WorkflowEngineServiceProvider {
     byVersion.put(AirflowEngineVersions.V2, airflow2Extension);
     byVersion.put(AirflowEngineVersions.V2_LEGACY_ALIAS, airflow2Extension);
 
-    if (AirflowEngineVersions.V3.equals(airflowEngineVersionProvider.getConfiguredVersion())
-        && isAirflow3BackendConfigured()) {
+    if (AirflowEngineVersions.V3.equals(airflowEngineVersionProvider.getConfiguredVersion())) {
+      IAirflowApiClient clientForAf3 =
+          isAirflow3BackendConfigured() ? airflow3ApiClient() : airflowApiClient;
       byVersion.put(
-          AirflowEngineVersions.V3, new AirflowV3WorkflowEngineExtension(airflow3ApiClient()));
+          AirflowEngineVersions.V3, new AirflowV3WorkflowEngineExtension(clientForAf3));
     }
     return new InternalAirflowExtensions(byVersion, airflow2Extension);
   }
@@ -153,24 +159,16 @@ public class WorkflowEngineServiceProvider {
   }
 
   /**
-   * Fail-fast when Airflow 3 is selected but its backend URL or credentials are missing. Without
-   * this the service would silently build an Airflow 3 ({@code api/v2}) engine pointed at the
-   * Airflow 2 host/client (missing URL) or fail late at {@code /auth/token} (missing credentials),
-   * instead of surfacing the misconfiguration at startup.
+   * Fail-fast when side-by-side Airflow 3 migration backend is configured but its credentials are
+   * missing.
    */
-  private void requireAirflow3BackendConfigured() {
-    if (!isAirflow3BackendConfigured()) {
-      throw new IllegalStateException(
-          "osdu.airflow.version=airflow3 but osdu.airflow.airflow3.url is not set. Set "
-              + "osdu.airflow.airflow3.url (env OSDU_AIRFLOW_AIRFLOW3_URL) to enable Airflow 3, or "
-              + "set osdu.airflow.version=airflow2.");
-    }
+  private void requireAirflow3BackendCredentials() {
     if (airflow3Username == null || airflow3Username.isBlank()
         || airflow3Password == null || airflow3Password.isBlank()) {
       throw new IllegalStateException(
-          "osdu.airflow.version=airflow3 requires osdu.airflow.airflow3.username and "
-              + "osdu.airflow.airflow3.password (env OSDU_AIRFLOW_AIRFLOW3_USERNAME / "
-              + "OSDU_AIRFLOW_AIRFLOW3_PASSWORD) for the api/v2 JWT token exchange.");
+          "osdu.airflow.airflow3.url is configured for side-by-side Airflow 3 migration, but "
+              + "osdu.airflow.airflow3.username or osdu.airflow.airflow3.password (env OSDU_AIRFLOW_AIRFLOW3_USERNAME / "
+              + "OSDU_AIRFLOW_AIRFLOW3_PASSWORD) is missing for the api/v2 JWT token exchange.");
     }
   }
 }

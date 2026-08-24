@@ -1,6 +1,6 @@
 /*
- *  Copyright 2020-2024 Google LLC
- *  Copyright 2020-2024 EPAM Systems, Inc
+ *  Copyright 2020-2022 Google LLC
+ *  Copyright 2020-2022 EPAM Systems, Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,45 +20,69 @@ package org.opengroup.osdu.workflow.provider.gcp.service;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.opengroup.osdu.workflow.logging.LoggerUtils.getTruncatedData;
-import static org.opengroup.osdu.workflow.provider.gcp.config.GcAirflowConfigConstants.COMPOSER_CLIENT;
-import static org.opengroup.osdu.workflow.provider.gcp.config.GcAirflowConfigConstants.IAAP;
 
+import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.InputStreamContent;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.collect.ImmutableSet;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import lombok.RequiredArgsConstructor;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.opengroup.osdu.core.common.model.http.AppException;
-import org.opengroup.osdu.workflow.config.AirflowConfig;
 import org.opengroup.osdu.workflow.model.ClientResponse;
 import org.opengroup.osdu.workflow.model.WorkflowEngineRequest;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
+import org.springframework.http.MediaType;
 
 @Slf4j
-@Service
-@ConditionalOnProperty(name = COMPOSER_CLIENT, havingValue = IAAP)
-@RequiredArgsConstructor
-public class ComposerIaapClient implements ComposerClient {
+public class ComposerIAMClient implements ComposerClient {
 
-  private final GoogleIapHelper googleIapHelper;
-  private final AirflowConfig airflowConfig;
+  public static final String CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
+  private final HttpTransport httpTransport = new NetHttpTransport();
+
+  private final GoogleCredentials credentials;
+
+  public ComposerIAMClient() throws IOException {
+    try {
+      credentials = GoogleCredentials.getApplicationDefault()
+          .createScoped(ImmutableSet.of(CLOUD_PLATFORM_SCOPE));
+    } catch (IOException e) {
+      log.error("Unable to get default application credentials!", e);
+      throw e;
+    }
+  }
 
   @Override
-  public ClientResponse sendAirflowRequest(
-      String httpMethod, String url, String stringData, WorkflowEngineRequest rq) {
+  public ClientResponse sendAirflowRequest(String httpMethod, String url, String stringData,
+      WorkflowEngineRequest rq) {
     log.debug(
         "Calling airflow endpoint with Google API. Http method: {}, Endpoint: {}, request body: {}",
         httpMethod, url, getTruncatedData(stringData));
-    String airflowUrl = this.airflowConfig.getUrl();
-    String iapClientId = this.googleIapHelper.getIapClientId(airflowUrl);
+
+    InputStreamContent inputStreamContent = null;
+
+    if (Objects.nonNull(stringData)) {
+      inputStreamContent =
+          new InputStreamContent(MediaType.APPLICATION_JSON_VALUE,
+              new ByteArrayInputStream(stringData.getBytes()));
+    }
 
     try {
-      HttpRequest httpRequest =
-          this.googleIapHelper.buildIapRequest(url, iapClientId, httpMethod, stringData);
+      HttpRequestInitializer httpRequestInitializer = new HttpCredentialsAdapter(credentials);
+
+      HttpRequest httpRequest = httpTransport
+          .createRequestFactory(httpRequestInitializer)
+          .buildRequest(httpMethod, new GenericUrl(url), inputStreamContent);
+
       HttpResponse response = httpRequest.execute();
       String content = IOUtils.toString(response.getContent(), UTF_8);
 
@@ -78,8 +102,7 @@ public class ComposerIaapClient implements ComposerClient {
     } catch (IOException e) {
       String errorMessage = format("Unable to send request to Airflow. %s", e.getMessage());
       log.error(errorMessage, e);
-      throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to send request.", errorMessage);
+      throw new AppException(500, "Failed to send request.", errorMessage);
     }
   }
-
 }
