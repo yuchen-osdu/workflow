@@ -20,16 +20,14 @@ package org.opengroup.osdu.workflow.provider.gcp.config;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.Mockito.mock;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.opengroup.osdu.workflow.config.AirflowConfig;
 import org.opengroup.osdu.workflow.provider.gcp.service.ComposerClient;
-import org.opengroup.osdu.workflow.provider.gcp.service.ComposerIAAPClient;
 import org.opengroup.osdu.workflow.provider.gcp.service.ComposerIAMClient;
+import org.opengroup.osdu.workflow.provider.gcp.service.ComposerIAPClient;
 
 class ComposerClientConfigurationTest {
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
   private final AirflowConfig airflowConfig = mock(AirflowConfig.class);
 
   @Test
@@ -39,7 +37,7 @@ class ComposerClientConfigurationTest {
     ComposerClientConfiguration configuration = new ComposerClientConfiguration(properties);
 
     ComposerClient client = configuration.composerClient(airflowConfig);
-    assertInstanceOf(ComposerIAAPClient.class, client);
+    assertInstanceOf(ComposerIAPClient.class, client);
   }
 
   @Test
@@ -49,11 +47,11 @@ class ComposerClientConfigurationTest {
     ComposerClientConfiguration configuration = new ComposerClientConfiguration(properties);
 
     ComposerClient client = configuration.composerClient(airflowConfig);
-    assertInstanceOf(ComposerIAAPClient.class, client);
+    assertInstanceOf(ComposerIAPClient.class, client);
   }
 
   @Test
-  void testCreatesGCCredentialsClientByDefault() {
+  void testCreatesIAMClientByDefault() {
     ComposerProperties properties = new ComposerProperties();
     ComposerClientConfiguration configuration = new ComposerClientConfiguration(properties);
 
@@ -61,7 +59,7 @@ class ComposerClientConfigurationTest {
       ComposerClient client = configuration.composerClient(airflowConfig);
       assertInstanceOf(ComposerIAMClient.class, client);
     } catch (Exception ignored) {
-      // In CI environments without GCP credentials GoogleCredentials.getApplicationDefault() may throw IOException
+      // In env without GCP credentials GoogleCredentials.getApplicationDefault() will throw IOException
     }
   }
 }

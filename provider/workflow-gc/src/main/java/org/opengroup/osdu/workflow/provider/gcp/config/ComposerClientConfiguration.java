@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.opengroup.osdu.workflow.config.AirflowConfig;
 import org.opengroup.osdu.workflow.provider.gcp.service.ComposerClient;
-import org.opengroup.osdu.workflow.provider.gcp.service.ComposerIAAPClient;
+import org.opengroup.osdu.workflow.provider.gcp.service.ComposerIAPClient;
 import org.opengroup.osdu.workflow.provider.gcp.service.ComposerIAMClient;
 import org.opengroup.osdu.workflow.provider.gcp.service.GoogleIapHelper;
 import org.springframework.context.annotation.Bean;
@@ -44,10 +44,9 @@ public class ComposerClientConfiguration {
     String clientType = composerProperties.getClient();
     if (IAAP.equalsIgnoreCase(clientType) || IAP.equalsIgnoreCase(clientType)) {
       log.info("Configuring ComposerIaapClient (IAP authentication) for Airflow");
-      return new ComposerIAAPClient(new GoogleIapHelper(), airflowConfig);
+      return new ComposerIAPClient(new GoogleIapHelper(), airflowConfig);
     }
-    log.info(
-        "Configuring ComposerGCCredentialsClient (Google Cloud IAM / ADC authentication) for Airflow");
+    log.info("Configuring ComposerGCCredentialsClient (Google Cloud IAM / ADC authentication) for Airflow");
     return new ComposerIAMClient();
   }
 }

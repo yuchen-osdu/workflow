@@ -36,7 +36,7 @@ import org.springframework.http.HttpStatus;
 
 @Slf4j
 @RequiredArgsConstructor
-public class ComposerIAAPClient implements ComposerClient {
+public class ComposerIAPClient implements ComposerClient {
 
   private final GoogleIapHelper googleIapHelper;
   private final AirflowConfig airflowConfig;
