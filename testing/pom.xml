@@ -42,7 +42,6 @@
   </licenses>
 
   <modules>
-    <module>workflow-test-aws</module>
     <module>workflow-test-core</module>
     <module>workflow-test-gc</module>
     <module>workflow-test-azure</module>
