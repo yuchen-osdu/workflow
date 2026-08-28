@@ -20,13 +20,13 @@
   <parent>
     <groupId>org.opengroup.osdu</groupId>
     <artifactId>workflow-test</artifactId>
-    <version>0.30.2-SNAPSHOT</version>
+    <version>0.31.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <groupId>org.opengroup.osdu.workflow</groupId>
   <artifactId>workflow-test-aws</artifactId>
-  <version>0.30.2-SNAPSHOT</version>
+  <version>0.31.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
 
@@ -71,7 +71,7 @@
     <dependency>
       <groupId>org.opengroup.osdu</groupId>
       <artifactId>workflow-test-core</artifactId>
-      <version>0.30.2-SNAPSHOT</version>
+      <version>0.31.0-SNAPSHOT</version>
     </dependency>
     <!-- AWS SDK v2 dependencies -->
     <dependency>
