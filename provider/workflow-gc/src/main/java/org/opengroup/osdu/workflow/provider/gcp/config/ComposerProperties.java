@@ -1,6 +1,6 @@
 /*
- *  Copyright 2020-2024 Google LLC
- *  Copyright 2020-2024 EPAM Systems, Inc
+ *  Copyright 2020-2026 Google LLC
+ *  Copyright 2020-2026 EPAM Systems, Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,11 +17,16 @@
 
 package org.opengroup.osdu.workflow.provider.gcp.config;
 
-import org.opengroup.osdu.workflow.config.AirflowConfigConstants;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-public class GcAirflowConfigConstants extends AirflowConfigConstants {
+@Getter
+@Setter
+@Configuration
+@ConfigurationProperties(prefix = "composer")
+public class ComposerProperties {
 
-  public static final String COMPOSER_CLIENT = "composer.client";
-  public static final String IAM = "IAM";
-  public static final String IAP = "IAP";
+  private String client;
 }
