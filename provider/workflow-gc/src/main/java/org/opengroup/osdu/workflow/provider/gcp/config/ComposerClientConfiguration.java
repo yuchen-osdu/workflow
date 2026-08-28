@@ -43,10 +43,10 @@ public class ComposerClientConfiguration {
       throws IOException {
     String clientType = composerProperties.getClient();
     if (IAAP.equalsIgnoreCase(clientType) || IAP.equalsIgnoreCase(clientType)) {
-      log.info("Configuring ComposerIaapClient (IAP authentication) for Airflow");
+      log.info("Configuring ComposerIAPClient (IAP authentication) for Airflow");
       return new ComposerIAPClient(new GoogleIapHelper(), airflowConfig);
     }
-    log.info("Configuring ComposerGCCredentialsClient (Google Cloud IAM / ADC authentication) for Airflow");
+    log.info("Configuring ComposerIAMClient (Google Cloud IAM / ADC authentication) for Airflow");
     return new ComposerIAMClient();
   }
 }

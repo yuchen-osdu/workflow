@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +33,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.opengroup.osdu.workflow.model.AirflowEngineVersions;
 import org.opengroup.osdu.workflow.provider.interfaces.IAirflowApiClient;
+import org.opengroup.osdu.workflow.provider.interfaces.IWorkflowEngineExtension;
 import org.opengroup.osdu.workflow.provider.interfaces.IWorkflowEngineService;
+import org.opengroup.osdu.workflow.service.AirflowV3WorkflowEngineExtension;
 import org.opengroup.osdu.workflow.service.InternalAirflowExtensions;
 import org.opengroup.osdu.workflow.service.PerRunAirflowWorkflowEngineService;
 import org.opengroup.osdu.workflow.service.factory.AirflowApiClientFactory;
@@ -137,5 +140,29 @@ class WorkflowEngineServiceProviderTest {
 
     assertThat(extensions).isNotNull();
     assertThat(extensions.hasVersionedRouting()).isTrue();
+    IWorkflowEngineExtension af3Ext = extensions.forEngineVersion(AirflowEngineVersions.V3);
+    assertThat(af3Ext).isInstanceOf(AirflowV3WorkflowEngineExtension.class);
+    assertThat(ReflectionTestUtils.getField(af3Ext, "airflowApiClient")).isSameAs(airflowApiClient);
+    verifyNoInteractions(airflowApiClientFactory);
+  }
+
+  @Test
+  void internalAirflowExtensions_whenAirflow3SideBySide_configuresAf3WithJwtClient() {
+    when(airflowEngineVersionProvider.getConfiguredVersion()).thenReturn(AirflowEngineVersions.V3);
+    ReflectionTestUtils.setField(provider, "airflow3Url", "https://airflow3.example.com");
+    ReflectionTestUtils.setField(provider, "airflow3Username", "admin");
+    ReflectionTestUtils.setField(provider, "airflow3Password", "secret");
+
+    IAirflowApiClient af3JwtClient = mock(IAirflowApiClient.class);
+    when(airflowApiClientFactory.createAirflowApiClient(eq("JwtAuth"), any())).thenReturn(af3JwtClient);
+
+    InternalAirflowExtensions extensions = provider.internalAirflowExtensions();
+
+    assertThat(extensions).isNotNull();
+    assertThat(extensions.hasVersionedRouting()).isTrue();
+    IWorkflowEngineExtension af3Ext = extensions.forEngineVersion(AirflowEngineVersions.V3);
+    assertThat(af3Ext).isInstanceOf(AirflowV3WorkflowEngineExtension.class);
+    assertThat(ReflectionTestUtils.getField(af3Ext, "airflowApiClient")).isSameAs(af3JwtClient);
+    verify(airflowApiClientFactory).createAirflowApiClient(eq("JwtAuth"), any());
   }
 }
