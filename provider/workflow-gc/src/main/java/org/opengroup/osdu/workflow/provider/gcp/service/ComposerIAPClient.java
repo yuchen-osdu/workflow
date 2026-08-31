@@ -20,8 +20,6 @@ package org.opengroup.osdu.workflow.provider.gcp.service;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.opengroup.osdu.workflow.logging.LoggerUtils.getTruncatedData;
-import static org.opengroup.osdu.workflow.provider.gcp.config.GcAirflowConfigConstants.COMPOSER_CLIENT;
-import static org.opengroup.osdu.workflow.provider.gcp.config.GcAirflowConfigConstants.IAAP;
 
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
@@ -34,15 +32,11 @@ import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.workflow.config.AirflowConfig;
 import org.opengroup.osdu.workflow.model.ClientResponse;
 import org.opengroup.osdu.workflow.model.WorkflowEngineRequest;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
 
 @Slf4j
-@Service
-@ConditionalOnProperty(name = COMPOSER_CLIENT, havingValue = IAAP)
 @RequiredArgsConstructor
-public class ComposerIaapClient implements ComposerClient {
+public class ComposerIAPClient implements ComposerClient {
 
   private final GoogleIapHelper googleIapHelper;
   private final AirflowConfig airflowConfig;
@@ -78,7 +72,8 @@ public class ComposerIaapClient implements ComposerClient {
     } catch (IOException e) {
       String errorMessage = format("Unable to send request to Airflow. %s", e.getMessage());
       log.error(errorMessage, e);
-      throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to send request.", errorMessage);
+      throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed to send request.",
+          errorMessage);
     }
   }
 

@@ -20,8 +20,6 @@ package org.opengroup.osdu.workflow.provider.gcp.service;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.opengroup.osdu.workflow.logging.LoggerUtils.getTruncatedData;
-import static org.opengroup.osdu.workflow.provider.gcp.config.GcAirflowConfigConstants.COMPOSER_CLIENT;
-import static org.opengroup.osdu.workflow.provider.gcp.config.GcAirflowConfigConstants.V2;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
@@ -42,22 +40,18 @@ import org.apache.commons.io.IOUtils;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.workflow.model.ClientResponse;
 import org.opengroup.osdu.workflow.model.WorkflowEngineRequest;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Service;
 
 @Slf4j
-@Service
-@ConditionalOnProperty(name = COMPOSER_CLIENT, havingValue = V2)
-public class ComposerV2Client implements ComposerClient {
+public class ComposerIAMClient implements ComposerClient {
 
   public static final String CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
   private final HttpTransport httpTransport = new NetHttpTransport();
 
   private final GoogleCredentials credentials;
 
-  public ComposerV2Client() throws IOException {
+  public ComposerIAMClient() throws IOException {
     try {
       credentials = GoogleCredentials.getApplicationDefault()
           .createScoped(ImmutableSet.of(CLOUD_PLATFORM_SCOPE));
