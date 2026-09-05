@@ -29,7 +29,7 @@
 
   <groupId>org.opengroup.osdu</groupId>
   <artifactId>os-workflow</artifactId>
-  <version>0.30.0-SNAPSHOT</version>
+  <version>0.31.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>os-workflow</name>
@@ -552,12 +552,6 @@
       <modules>
         <module>workflow-core</module>
         <module>workflow-core-plus</module>
-      </modules>
-    </profile>
-    <profile>
-      <id>aws</id>
-      <modules>
-        <module>provider/workflow-aws</module>
       </modules>
     </profile>
     <profile>
