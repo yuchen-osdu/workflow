@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.opengroup.osdu.azure.partition.PartitionInfoAzure;
@@ -13,6 +12,7 @@ import org.opengroup.osdu.azure.partition.PartitionServiceClient;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.workflow.config.AirflowConfig;
+import org.opengroup.osdu.workflow.model.AirflowEngineVersions;
 import org.opengroup.osdu.workflow.model.AirflowGetDAGRunStatus;
 import org.opengroup.osdu.workflow.model.TriggerWorkflowResponse;
 import org.opengroup.osdu.workflow.model.WorkflowEngineRequest;
@@ -23,8 +23,10 @@ import org.opengroup.osdu.workflow.provider.azure.config.AzureWorkflowEngineConf
 import org.opengroup.osdu.workflow.provider.azure.fileshare.FileShareConfig;
 import org.opengroup.osdu.workflow.provider.azure.fileshare.FileShareStore;
 import org.opengroup.osdu.workflow.provider.azure.interfaces.IActiveDagRunsCache;
+import org.opengroup.osdu.workflow.provider.azure.utils.airflow.AirflowEngineUtilSelector;
 import org.opengroup.osdu.workflow.provider.azure.utils.airflow.IAirflowWorkflowEngineUtil;
 import org.opengroup.osdu.workflow.provider.interfaces.IWorkflowEngineService;
+import org.opengroup.osdu.workflow.service.Airflow3TokenClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,7 +81,7 @@ public class WorkflowEngineServiceImpl implements IWorkflowEngineService {
   private AzureWorkflowEngineConfig workflowEngineConfig;
 
   @Autowired
-  private IAirflowWorkflowEngineUtil engineUtil;
+  private AirflowEngineUtilSelector engineUtilSelector;
 
   @Autowired
   @Qualifier("WorkflowObjectMapper")
@@ -95,9 +97,13 @@ public class WorkflowEngineServiceImpl implements IWorkflowEngineService {
   @Autowired
   private PartitionServiceClient partitionService;
 
+  /** Lazily-built JWT token client for the Airflow 3 backend (single deployment-wide host). */
+  private volatile Airflow3TokenClient airflow3TokenClient;
+
   @Override
   public void createWorkflow(
       final WorkflowEngineRequest rq, final Map<String, Object> registrationInstruction) {
+    IAirflowWorkflowEngineUtil engineUtil = engineUtilSelector.utilFor(rq);
     String dagContent = (String) registrationInstruction.get(KEY_DAG_CONTENT);
     if (workflowEngineConfig.getIgnoreDagContent()) {
       LOGGER.info("Ignoring input DAG content: {}", dagContent);
@@ -118,6 +124,7 @@ public class WorkflowEngineServiceImpl implements IWorkflowEngineService {
 
   @Override
   public void deleteWorkflow(WorkflowEngineRequest rq) {
+    IAirflowWorkflowEngineUtil engineUtil = engineUtilSelector.utilFor(rq);
     String workflowName = rq.getWorkflowName();
     LOGGER.info("Deleting DAG {} in Airflow", workflowName);
 
@@ -128,7 +135,8 @@ public class WorkflowEngineServiceImpl implements IWorkflowEngineService {
       try {
         String deleteDAGEndpoint = String.format(engineUtil.getAirflowDagsUrl(), workflowName);
 
-        callAirflowApi(getAirflowConfig(rq.isSystemWorkflow()), deleteDAGEndpoint, HttpMethod.DELETE,
+        callAirflowApi(resolveAirflowConfig(rq), isAirflow3Run(rq),
+            deleteDAGEndpoint, HttpMethod.DELETE,
             null, String.format(AIRFLOW_DELETE_DAG_ERROR_MESSAGE, workflowName));
       } catch (AppException e) {
         if (e.getError().getCode() != 404) {
@@ -157,12 +165,14 @@ public class WorkflowEngineServiceImpl implements IWorkflowEngineService {
 
   @Override
   public void saveCustomOperator(final String customOperatorDefinition, final String fileName) {
+    IAirflowWorkflowEngineUtil engineUtil = engineUtilSelector.getDefaultUtil();
     fileShareStore.writeToFileShare(dpsHeaders.getPartitionId(),
         engineUtil.getFileShareName(fileShareConfig),
         fileShareConfig.getCustomOperatorsFolder(), fileName, customOperatorDefinition);
   }
 
-  private ClientResponse triggerWorkflowBase(AirflowConfig airflowConfig, final String runId,
+  private ClientResponse triggerWorkflowBase(AirflowConfig airflowConfig, boolean isAirflow3,
+                                             IAirflowWorkflowEngineUtil engineUtil, final String runId,
                                              final String workflowId, String workflowName,
                                              final Map<String, Object> inputData) {
     String triggerDAGEndpoint = String.format(engineUtil.getAirflowDagRunsUrl(), workflowName);
@@ -172,15 +182,15 @@ public class WorkflowEngineServiceImpl implements IWorkflowEngineService {
     requestBody.put(AIRFLOW_PAYLOAD_PARAMETER_NAME, inputData);
     requestBody = engineUtil.addMicroSecParam(requestBody);
 
-    return callAirflowApi(airflowConfig, triggerDAGEndpoint, HttpMethod.POST,
+    return callAirflowApi(airflowConfig, isAirflow3, triggerDAGEndpoint, HttpMethod.POST,
         requestBody.toString(),
         String.format(AIRFLOW_TRIGGER_DAG_ERROR_MESSAGE, workflowId, workflowName));
   }
 
   private ClientResponse triggerWorkflowUsingController(
-      AirflowConfig airflowConfig, final String runId, final String workflowId,
-      String workflowName, Map<String, Object> inputData, boolean isSystemWorkflow) {
-    String controllerId = getAirflowConfig(isSystemWorkflow).getControllerDagId();
+      AirflowConfig airflowConfig, boolean isAirflow3, IAirflowWorkflowEngineUtil engineUtil, final String runId,
+      final String workflowId, String workflowName, Map<String, Object> inputData) {
+    String controllerId = airflowConfig.getControllerDagId();
     String triggerDAGEndpoint = String.format(engineUtil.getAirflowDagRunsUrl(), controllerId);
 
     JSONObject requestBody = new JSONObject();
@@ -195,7 +205,7 @@ public class WorkflowEngineServiceImpl implements IWorkflowEngineService {
     requestBody.put(AIRFLOW_PAYLOAD_PARAMETER_NAME, inputData);
     requestBody = engineUtil.addMicroSecParam(requestBody);
 
-    return callAirflowApi(airflowConfig, triggerDAGEndpoint, HttpMethod.POST,
+    return callAirflowApi(airflowConfig, isAirflow3, triggerDAGEndpoint, HttpMethod.POST,
         requestBody.toString(),
         String.format(AIRFLOW_TRIGGER_DAG_ERROR_MESSAGE, workflowId, workflowName));
   }
@@ -215,13 +225,16 @@ public class WorkflowEngineServiceImpl implements IWorkflowEngineService {
     String workflowId = rq.getWorkflowId();
     LOGGER.info("Submitting ingestion with Airflow with dagName: {}", workflowName);
     ClientResponse response;
-    AirflowConfig airflowConfig = getAirflowConfig(rq.isSystemWorkflow());
+    IAirflowWorkflowEngineUtil engineUtil = engineUtilSelector.utilFor(rq);
+    AirflowConfig airflowConfig = resolveAirflowConfig(rq);
+    boolean isAirflow3 = isAirflow3Run(rq);
     addUserIdToExecutionContext(inputData, rq);
     if (airflowConfig.isDagRunAbstractionEnabled()) {
-      response = triggerWorkflowUsingController(airflowConfig, runId, workflowId,
-          workflowName, inputData, rq.isSystemWorkflow());
+      response = triggerWorkflowUsingController(airflowConfig, isAirflow3, engineUtil, runId, workflowId,
+          workflowName, inputData);
     } else {
-      response = triggerWorkflowBase(airflowConfig, runId, workflowId, workflowName, inputData);
+      response = triggerWorkflowBase(airflowConfig, isAirflow3, engineUtil, runId, workflowId, workflowName,
+          inputData);
     }
 
     try {
@@ -266,36 +279,89 @@ public class WorkflowEngineServiceImpl implements IWorkflowEngineService {
     }
   }
 
-  private ClientResponse callAirflowApi(AirflowConfig airflowConfig, String apiEndpoint,
-                                        String method, Object body, String errorMessage) {
+  private ClientResponse callAirflowApi(AirflowConfig airflowConfig, boolean isAirflow3,
+                                        String apiEndpoint, String method, Object body,
+                                        String errorMessage) {
     String url = String.format("%s/%s", airflowConfig.getUrl(), apiEndpoint);
     LOGGER.info("Calling airflow endpoint {} with method {}", url, method);
 
-    WebResource webResource = restClient.resource(url);
-    ClientResponse response = webResource
-        .type(MediaType.APPLICATION_JSON)
-        .header("Authorization", "Basic " + airflowConfig.getAppKey())
-        .method(method, ClientResponse.class, body);
+    ClientResponse response;
+    if (isAirflow3) {
+      // Airflow 3 api/v2 uses native JWT bearer auth (POST /auth/token), not HTTP Basic.
+      Airflow3TokenClient tokenClient = airflow3TokenClient(airflowConfig);
+      String token = tokenClient.token();
+      response = invokeWithBearer(url, method, body, token);
+      if (isUnauthorized(response.getStatus())) {
+        LOGGER.warn("Airflow 3 returned {} for {}; refreshing JWT and retrying once.",
+            response.getStatus(), url);
+        response.close();
+        response = invokeWithBearer(url, method, body, tokenClient.refreshIfStale(token));
+      }
+    } else {
+      response = invokeWithBasic(url, method, body, airflowConfig.getAppKey());
+    }
 
     final int status = response.getStatus();
     LOGGER.info("Received response status: {}.", status);
 
-    if (status != 200) {
+    if (!isSuccess(status)) {
       String responseBody = response.getEntity(String.class);
       throw new AppException(status, responseBody, errorMessage);
     }
     return response;
   }
 
+  private ClientResponse invokeWithBearer(String url, String method, Object body, String token) {
+    return restClient.resource(url)
+        .type(MediaType.APPLICATION_JSON)
+        .header("Authorization", "Bearer " + token)
+        .method(method, ClientResponse.class, body);
+  }
+
+  private ClientResponse invokeWithBasic(String url, String method, Object body, String appKey) {
+    return restClient.resource(url)
+        .type(MediaType.APPLICATION_JSON)
+        .header("Authorization", "Basic " + appKey)
+        .method(method, ClientResponse.class, body);
+  }
+
+  /**
+   * Lazily builds a single {@link Airflow3TokenClient} for the (deployment-wide) Airflow 3 backend
+   * so the JWT is cached and refreshed once per host rather than per request.
+   */
+  private Airflow3TokenClient airflow3TokenClient(AirflowConfig airflow3Config) {
+    Airflow3TokenClient client = this.airflow3TokenClient;
+    if (client == null) {
+      synchronized (this) {
+        client = this.airflow3TokenClient;
+        if (client == null) {
+          client = new Airflow3TokenClient(restClient, airflow3Config);
+          this.airflow3TokenClient = client;
+        }
+      }
+    }
+    return client;
+  }
+
+  private static boolean isSuccess(int status) {
+    return status >= HttpStatus.OK.value() && status < 300;
+  }
+
+  private static boolean isUnauthorized(int status) {
+    return status == HttpStatus.UNAUTHORIZED.value() || status == HttpStatus.FORBIDDEN.value();
+  }
+
   @Override
   public WorkflowStatusType getWorkflowRunStatus(WorkflowEngineRequest rq) {
+    IAirflowWorkflowEngineUtil engineUtil = engineUtilSelector.utilFor(rq);
     String workflowName = rq.getWorkflowName();
     String dagRunIdentificationParam = engineUtil.getDagRunIdentificationParam(rq);
     LOGGER.info("getting status of WorkflowRun of Workflow {} with identification on {}",
         workflowName, dagRunIdentificationParam);
     String getDAGRunStatusEndpoint = String.format(engineUtil.getAirflowDagRunsStatusUrl(),
         workflowName, dagRunIdentificationParam);
-    ClientResponse response = callAirflowApi(getAirflowConfig(rq.isSystemWorkflow()),
+    ClientResponse response = callAirflowApi(resolveAirflowConfig(rq),
+        isAirflow3Run(rq),
         getDAGRunStatusEndpoint, HttpMethod.GET, null,
         String.format(AIRFLOW_WORKFLOW_RUN_NOT_FOUND, workflowName, dagRunIdentificationParam));
     try {
@@ -322,10 +388,37 @@ public class WorkflowEngineServiceImpl implements IWorkflowEngineService {
     }
   }
 
+  /**
+   * Resolves the Airflow backend config that owns the request. Airflow 3 runs use the single
+   * deployment-wide Airflow 3 config; all other runs use the partition/system Airflow 2 config.
+   */
+  private AirflowConfig resolveAirflowConfig(WorkflowEngineRequest rq) {
+    if (isAirflow3Run(rq)) {
+      return airflowConfigResolver.getAirflow3Config();
+    }
+    return getAirflowConfig(rq != null && rq.isSystemWorkflow());
+  }
+
+  /**
+   * A request is treated as Airflow 3 only when it is stamped {@code airflow3} AND Airflow 3 is
+   * actually enabled in this deployment. If Airflow 3 has been disabled/rolled back while an AF3 run
+   * is still in flight, the run degrades to the base (Airflow 2) engine/config/auth consistently —
+   * Airflow then returns 404 for a run it never owned, which is a graceful failure vs a hard 500.
+   */
+  private boolean isAirflow3Run(WorkflowEngineRequest rq) {
+    return rq != null
+        && AirflowEngineVersions.isAirflow3(rq.getEngineVersion())
+        && engineUtilSelector.isV3Available();
+  }
+
   private Integer getActiveDagRunsCount() throws Exception {
+    IAirflowWorkflowEngineUtil engineUtil = engineUtilSelector.getDefaultUtil();
+    boolean isAirflow3 = engineUtilSelector.isV3Available();
+    AirflowConfig airflowConfig =
+        isAirflow3 ? airflowConfigResolver.getAirflow3Config() : getAirflowConfig(false);
     LOGGER.info("Obtaining active dag runs from Airflow");
     String endpoint = engineUtil.getAirflowActiveDagRunsCountUrl();
-    ClientResponse clientResponse = callAirflowApi(getAirflowConfig(false), endpoint, HttpMethod.GET,
+    ClientResponse clientResponse = callAirflowApi(airflowConfig, isAirflow3, endpoint, HttpMethod.GET,
         null, AIRFLOW_GET_ACTIVE_DAG_RUNS_ERROR_MESSAGE);
 
     Integer activeDagRuns = engineUtil.extractActiveDagRunsResponse(clientResponse.getEntity(String.class));

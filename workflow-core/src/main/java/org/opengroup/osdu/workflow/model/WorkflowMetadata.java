@@ -48,6 +48,14 @@ public class WorkflowMetadata {
   @Setter(AccessLevel.NONE)
   private boolean isSystemWorkflow;
 
+  /**
+   * Airflow engine that owns this workflow's DAG (e.g. airflow2, airflow3), stamped at creation.
+   * Persisted so a delete targets the engine the DAG was created on rather than the currently
+   * configured engine, avoiding orphaned DAGs across a migration. Not serialized in API responses.
+   */
+  @JsonIgnore
+  private String engineVersion;
+
   @JsonIgnore
   public boolean isDeployedThroughWorkflowService() {
     return isDeployedThroughWorkflowService;

@@ -8,6 +8,7 @@ import org.opengroup.osdu.core.common.exception.BadRequestException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.workflow.exception.WorkflowNotFoundException;
 import org.opengroup.osdu.workflow.logging.AuditLogger;
+import org.opengroup.osdu.workflow.config.AirflowEngineVersionProvider;
 import org.opengroup.osdu.workflow.model.CreateWorkflowRequest;
 import org.opengroup.osdu.workflow.model.WorkflowEngineRequest;
 import org.opengroup.osdu.workflow.model.WorkflowMetadata;
@@ -35,6 +36,8 @@ public class WorkflowManagerServiceImpl implements IWorkflowManagerService {
   private final IWorkflowRunService workflowRunService;
 
   private final AuditLogger auditLogger;
+
+  private final AirflowEngineVersionProvider airflowEngineVersionProvider;
 
   @Override
   public WorkflowMetadata createWorkflow(final CreateWorkflowRequest request) {
@@ -94,6 +97,7 @@ public class WorkflowManagerServiceImpl implements IWorkflowManagerService {
         .registrationInstructions(request.getRegistrationInstructions())
         .workflowName(request.getWorkflowName())
         .isSystemWorkflow(isSystemWorkflow)
+        .engineVersion(airflowEngineVersionProvider.getConfiguredVersion())
         .build();
   }
 
@@ -110,6 +114,7 @@ public class WorkflowManagerServiceImpl implements IWorkflowManagerService {
         WorkflowEngineRequest.builder()
             .workflowName(workflowMetadata.getWorkflowName())
             .isSystemWorkflow(isSystemWorkflow)
+            .engineVersion(savedMetadata.getEngineVersion())
             .build();
     airflowResolver.getWorkflowEngineService(workflowMetadata).createWorkflow(rq, request.getRegistrationInstructions());
     auditLogger.workflowCreateEvent(Collections.singletonList(savedMetadata.toString()));
@@ -128,6 +133,7 @@ public class WorkflowManagerServiceImpl implements IWorkflowManagerService {
         .workflowName(workflowName)
         .isDeployedThroughWorkflowService(workflowMetadata.isDeployedThroughWorkflowService())
         .isSystemWorkflow(isSystemWorkflow)
+        .engineVersion(workflowMetadata.getEngineVersion())
         .build();
     airflowResolver.getWorkflowEngineService(workflowMetadata).deleteWorkflow(rq);
     if (!isSystemWorkflow) {

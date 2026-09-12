@@ -35,7 +35,8 @@ public class WorkflowMetadataUtils {
         .version(workflowMetadata.getVersion())
         .isRegisteredByWorkflowService(
             dagContent != null && !dagContent.isEmpty())
-        .registrationInstructions(registrationInstructionForMetadata).build();
+        .registrationInstructions(registrationInstructionForMetadata)
+        .engineVersion(workflowMetadata.getEngineVersion()).build();
   }
 
   public static WorkflowMetadata buildWorkflowMetadata(final WorkflowMetadataDoc workflowMetadataDoc) {
@@ -47,7 +48,8 @@ public class WorkflowMetadataUtils {
         .creationTimestamp(workflowMetadataDoc.getCreationTimestamp())
         .version(workflowMetadataDoc.getVersion())
         .isDeployedThroughWorkflowService(workflowMetadataDoc.getIsRegisteredByWorkflowService())
-        .registrationInstructions(workflowMetadataDoc.getRegistrationInstructions()).build();
+        .registrationInstructions(workflowMetadataDoc.getRegistrationInstructions())
+        .engineVersion(workflowMetadataDoc.getEngineVersion()).build();
   }
 
   public static SqlQuerySpec buildSqlQuerySpecForGetAllWorkflow(String prefix) {

@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 import org.opengroup.osdu.core.common.model.http.AppError;
 import org.opengroup.osdu.workflow.model.WorkflowRole;
 import org.opengroup.osdu.workflow.provider.interfaces.IWorkflowRunExtension;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,7 +38,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/v1/workflow")
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "osdu.airflow.version2", havingValue = "true", matchIfMissing = false)
+@ConditionalOnExpression(
+    "T(org.opengroup.osdu.workflow.model.AirflowEngineVersions)"
+        + ".resolvesToStableApi('${osdu.airflow.version:}', ${osdu.airflow.version2:false})")
 public class RunDetailsApi {
 
   private final IWorkflowRunExtension workflowRunExtension;

@@ -1,5 +1,6 @@
 package org.opengroup.osdu.workflow.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,4 +32,11 @@ public class WorkflowRun {
   @Schema(description = "System captured user details which triggered the run.", type = "string")
   private String submittedBy;
   private String workflowEngineExecutionDate;
+  /**
+   * Airflow engine that owns this run (e.g. airflow2, airflow3). Persisted for deterministic
+   * status/log routing, but intentionally NOT serialized in API responses so the public contract
+   * does not expose the internal engine choice.
+   */
+  @JsonIgnore
+  private String engineVersion;
 }

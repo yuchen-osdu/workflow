@@ -22,4 +22,6 @@ import org.opengroup.osdu.workflow.config.AirflowConfigConstants;
 public class GcAirflowConfigConstants extends AirflowConfigConstants {
 
   public static final String COMPOSER_CLIENT = "composer.client";
+  public static final String IAM = "IAM";
+  public static final String IAP = "IAP";
 }

@@ -42,6 +42,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
+import org.opengroup.osdu.workflow.config.AirflowEngineVersionProvider;
 import org.opengroup.osdu.workflow.exception.WorkflowNotFoundException;
 import org.opengroup.osdu.workflow.exception.WorkflowRunCompletedException;
 import org.opengroup.osdu.workflow.gsm.WorkflowStatusPublisher;
@@ -89,6 +90,8 @@ public class WorkflowRunServiceImpl implements IWorkflowRunService {
 
   private final IAirflowResolver airflowResolver;
 
+  private final AirflowEngineVersionProvider airflowEngineVersionProvider;
+
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   @Override
@@ -103,6 +106,7 @@ public class WorkflowRunServiceImpl implements IWorkflowRunService {
         .workflowName(workflowName)
         .dagName(getDagName(workflowMetadata))
         .isSystemWorkflow(workflowMetadata.isSystemWorkflow())
+        .engineVersion(airflowEngineVersionProvider.getConfiguredVersion())
         .build();
     TriggerWorkflowResponse rs = triggerWorkflowEngine(rq, request, workflowMetadata);
     final WorkflowRun workflowRun = buildWorkflowRun(rq, rs);
@@ -297,6 +301,7 @@ public class WorkflowRunServiceImpl implements IWorkflowRunService {
             .workflowEngineExecutionDate(workflowRun.getWorkflowEngineExecutionDate())
             .dagName(getDagName(workflowMetadata))
             .isSystemWorkflow(workflowMetadata.isSystemWorkflow())
+            .engineVersion(workflowRun.getEngineVersion())
             .build();
 
     return getWorkflowEngineService(workflowMetadata).getWorkflowRunStatus(rq);
@@ -319,6 +324,7 @@ public class WorkflowRunServiceImpl implements IWorkflowRunService {
         .status(WorkflowStatusType.SUBMITTED)
         .workflowId(rq.getWorkflowId())
         .workflowName(rq.getWorkflowName())
+        .engineVersion(rq.getEngineVersion())
         .build();
   }
 
@@ -348,6 +354,7 @@ public class WorkflowRunServiceImpl implements IWorkflowRunService {
         .workflowEngineExecutionDate(workflowRun.getWorkflowEngineExecutionDate())
         .status(workflowStatusType)
         .workflowName(workflowRun.getWorkflowName())
+        .engineVersion(workflowRun.getEngineVersion())
         .build();
   }
 }

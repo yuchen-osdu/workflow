@@ -25,6 +25,8 @@ data:
   PARTITION_HOST: {{ .Values.data.partitionHost | quote }}
   ENTITLEMENTS_HOST: {{ .Values.data.entitlementsHost | quote }}
   OSDU_AIRFLOW_URL: {{ .Values.data.osduAirflowUrl | quote }}
+  OSDU_AIRFLOW_VERSION: {{ .Values.data.airflowVersion | quote }}
+  COMPOSER_CLIENT: {{ .Values.data.composerClient | quote }}
   {{- if .Values.global.otelJavaagentEnabled }}
   OTEL_JAVAAGENT_ENABLED: {{.Values.global.otelJavaagentEnabled | quote}}
   OTEL_EXPORTER_OTLP_ENDPOINT: {{.Values.data.otelExporterEndpoint | quote}}

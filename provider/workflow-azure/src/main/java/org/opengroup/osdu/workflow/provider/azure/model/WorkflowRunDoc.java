@@ -17,4 +17,5 @@ public class WorkflowRunDoc {
   private String status;
   private String submittedBy;
   private String workflowEngineExecutionDate;
+  private String engineVersion;
 }

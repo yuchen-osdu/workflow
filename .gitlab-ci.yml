@@ -1,16 +1,6 @@
 variables:
   CORE_BUILD_SUBDIR: workflow-core
 
-  AWS_BUILD_SUBDIR: provider/workflow-aws/build-aws
-  AWS_TEST_SUBDIR: testing/workflow-test-aws
-  AWS_CHART_SUBDIR: devops/aws/chart
-  AWS_SERVICE: ingestion-workflow
-  AWS_SERVICE_GATEWAY: osdu-services/osdu-gateway
-  AWS_ENVIRONMENT: dev
-  AWS_DEPLOY_TARGET: TF
-  AWS_EKS_DEPLOYMENT_NAME: os-ingestion-workflow
-  AWS_SERVICE_NAMESPACE: osdu-ingest
-
   # Start azure specific variables
   AZURE_SERVICE: ingestion-workfow
   AZURE_BUILD_SUBDIR: provider/workflow-azure
@@ -19,6 +9,7 @@ variables:
   AZURE_HELM_SUBDIR: osdu-azure/workflow
   # End azure specific variables
   ACCEPTANCE_TEST_DIR: "workflow-acceptance-test"
+  EXPOSE_FEATUREFLAG_ENABLED: "false"
 
 include:
   - project: "osdu/platform/ci-cd-pipelines"
@@ -34,25 +25,19 @@ include:
     file: "scanners/fossa-maven.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
+    file: "reporting/reporting.yml"
+
+  - project: "osdu/platform/ci-cd-pipelines"
     file: "publishing/pages.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/gc-global.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
-    file: "cloud-providers/aws-global.yml"
-
-  - project: "osdu/platform/ci-cd-pipelines"
-    file: "cloud-providers/aws-maven.yml"
-
-  - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/azure.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/cimpl-global.yml"
-
-  - project: "osdu/platform/ci-cd-pipelines"
-    file: "cloud-providers/aws-one-pipeline.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/azure-one-pipeline.yml"
@@ -101,8 +86,17 @@ azure_containerize:
 azure_test:
   image: community.opengroup.org:5555/osdu/platform/deployment-and-operations/base-containers-azure/azure-maven17:v0.0.1
 
-aws-test-java:
-  image: $CI_REGISTRY/osdu/platform/deployment-and-operations/base-containers-aws/aws-maven/aws-maven:v2.0
+# Install branch workflow-core into .m2 first so the standalone azure coverage build
+# resolves AF3 classes not yet in the cached core snapshot.
+azure_code_coverage:
+  script:
+    - mvn -B -Pcore -pl workflow-core -am install -DskipTests -Denforcer.skip=true
+    - mvn clean test jacoco:report -f $AZURE_BUILD_SUBDIR/pom.xml
+    - cat $AZURE_BUILD_SUBDIR/target/site/jacoco/index.html | grep -o '<tfoot>.*</tfoot>'
+    - coverageText=$(cat $AZURE_BUILD_SUBDIR/target/site/jacoco/index.html | grep -o 'Total[^%]*%' | sed 's/<.*>/ /; s/Total/Jacoco Coverage Total:/')
+    - coverageValue=$(echo $coverageText | grep -o -E "[0-9]+")
+    - echo "AZURE_COVERAGE=$coverageValue" >> azure_code_coverage.env
+    - echo "Code coverage obtained ${coverageValue}"
 
 fossa-analyze:
   image: $CI_REGISTRY/divido/fossa-with-cache:v0.9-jdk17
