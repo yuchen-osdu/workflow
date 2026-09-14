@@ -1,16 +1,6 @@
 variables:
   CORE_BUILD_SUBDIR: workflow-core
 
-  AWS_BUILD_SUBDIR: provider/workflow-aws/build-aws
-  AWS_TEST_SUBDIR: testing/workflow-test-aws
-  AWS_CHART_SUBDIR: devops/aws/chart
-  AWS_SERVICE: ingestion-workflow
-  AWS_SERVICE_GATEWAY: osdu-services/osdu-gateway
-  AWS_ENVIRONMENT: dev
-  AWS_DEPLOY_TARGET: TF
-  AWS_EKS_DEPLOYMENT_NAME: os-ingestion-workflow
-  AWS_SERVICE_NAMESPACE: osdu-ingest
-
   # Start azure specific variables
   AZURE_SERVICE: ingestion-workfow
   AZURE_BUILD_SUBDIR: provider/workflow-azure
@@ -44,19 +34,10 @@ include:
     file: "cloud-providers/gc-global.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
-    file: "cloud-providers/aws-global.yml"
-
-  - project: "osdu/platform/ci-cd-pipelines"
-    file: "cloud-providers/aws-maven.yml"
-
-  - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/azure.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/cimpl-global.yml"
-
-  - project: "osdu/platform/ci-cd-pipelines"
-    file: "cloud-providers/aws-one-pipeline.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/azure-one-pipeline.yml"
@@ -116,9 +97,6 @@ azure_code_coverage:
     - coverageValue=$(echo $coverageText | grep -o -E "[0-9]+")
     - echo "AZURE_COVERAGE=$coverageValue" >> azure_code_coverage.env
     - echo "Code coverage obtained ${coverageValue}"
-
-aws-test-java:
-  image: $CI_REGISTRY/osdu/platform/deployment-and-operations/base-containers-aws/aws-maven/aws-maven:v2.0
 
 fossa-analyze:
   image: $CI_REGISTRY/divido/fossa-with-cache:v0.9-jdk17
