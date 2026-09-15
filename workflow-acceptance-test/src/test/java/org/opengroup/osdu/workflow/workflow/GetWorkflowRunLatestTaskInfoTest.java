@@ -1,6 +1,6 @@
 /*
- *  Copyright 2020-2025 Google LLC
- *  Copyright 2020-2025 EPAM Systems, Inc
+ *  Copyright 2020-2026 Google LLC
+ *  Copyright 2020-2026 EPAM Systems, Inc
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,165 +17,154 @@
 
 package org.opengroup.osdu.workflow.workflow;
 
+import org.opengroup.osdu.core.test.auth.UserType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.opengroup.osdu.workflow.consts.DefaultVariable.WORKFLOW_HOST;
-import static org.opengroup.osdu.workflow.consts.DefaultVariable.getEnvironmentVariableOrDefaultKey;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.opengroup.osdu.workflow.consts.TestConstants.CREATE_WORKFLOW_WORKFLOW_NAME;
 import static org.opengroup.osdu.workflow.consts.TestConstants.EXTERNAL_AIRFLOW_TESTS_ENABLED;
 import static org.opengroup.osdu.workflow.consts.TestConstants.WORKFLOW_NAME_EXTERNAL_AIRFLOW;
-import static org.opengroup.osdu.workflow.util.WorkflowApiHelper.deleteCreatedWorkflows;
-import static org.opengroup.osdu.workflow.util.WorkflowApiHelper.deleteWorkflowAndSendFinishedUpdateRequestToWorkflowRuns;
-import static org.opengroup.osdu.workflow.util.WorkflowApiHelper.sendWorkflowRunFinishedUpdateRequestToCreatedWorkflowRuns;
-import static org.opengroup.osdu.workflow.util.WorkflowApiHelper.waitForCreatedWorkflowRunsToComplete;
 
-import java.util.HashMap;
+import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
-import javax.ws.rs.HttpMethod;
-
+import org.apache.hc.core5.http.HttpStatus;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.opengroup.osdu.workflow.util.HTTPClient;
+import org.opengroup.osdu.core.test.client.ClientException;
+import org.opengroup.osdu.workflow.util.BaseWorkflowAcceptanceTest;
 import org.opengroup.osdu.workflow.util.TestExternalAirflow;
-import org.opengroup.osdu.workflow.util.v3.TestBase;
+import org.opengroup.osdu.core.test.client.model.workflow.WorkflowRunInfo;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sun.jersey.api.client.ClientResponse;
 
-public final class GetWorkflowRunLatestTaskInfoTest extends TestBase {
+public final class GetWorkflowRunLatestTaskInfoTest extends BaseWorkflowAcceptanceTest {
 
-	public static final String GET_LATEST_DETAILS_BY_ID_API_ENDPOINT = getEnvironmentVariableOrDefaultKey(WORKFLOW_HOST)
-			+ "v1/workflow/%s/workflowRun/%s/latestInfo";
-	public static final String XCOM_FIELD = "xcom";
+    public static final String XCOM_FIELD = "xcom";
 
-  @BeforeAll
-  static void beforeAll() throws Exception {
-    HTTPClient httpClient = new HTTPClient();
-    Map<String, String> headers = httpClient.getCommonHeader();
-    deleteWorkflowAndSendFinishedUpdateRequestToWorkflowRuns(CREATE_WORKFLOW_WORKFLOW_NAME, httpClient, headers);
-    if (EXTERNAL_AIRFLOW_TESTS_ENABLED) {
-      deleteWorkflowAndSendFinishedUpdateRequestToWorkflowRuns(WORKFLOW_NAME_EXTERNAL_AIRFLOW, httpClient, headers);
+    @BeforeAll
+    static void beforeAll() {
+        cleanupWorkflowPreRun(CREATE_WORKFLOW_WORKFLOW_NAME);
+        if (EXTERNAL_AIRFLOW_TESTS_ENABLED) {
+            cleanupWorkflowPreRun(WORKFLOW_NAME_EXTERNAL_AIRFLOW);
+        }
     }
-  }
 
-	@BeforeEach
-	@Override
-	public void setup() throws Exception {
-		this.client = new HTTPClient();
-		this.headers = this.client.getCommonHeader();
-  }
+    @BeforeEach
+    @Override
+    public void setup() {
+        super.setup();
+    }
 
-	@AfterEach
-	@Override
-	public void tearDown() throws Exception {
-    waitForCreatedWorkflowRunsToComplete(createdWorkflowRuns, client, headers);
-    sendWorkflowRunFinishedUpdateRequestToCreatedWorkflowRuns(createdWorkflowRuns, client, headers);
-    deleteCreatedWorkflows(createdWorkflowsWorkflowNames, client, headers);
-		this.client = null;
-		this.headers = null;
-	}
+    @AfterEach
+    @Override
+    public void teardown() {
+        waitForCreatedWorkflowRunsToComplete();
+        sendWorkflowRunFinishedUpdateRequestToCreatedWorkflowRuns();
+        super.teardown();
+    }
 
-	@Test
-	public void testGetLatestTaskDetailsOfWorkflowRun() throws Exception {
-		String latestRunDetailsUrl = getLatestRunDetailsUrl();
+    @Test
+    public void testGetLatestTaskDetailsOfWorkflowRun() {
+        String workflowName = prepareWorkflowAndGetName();
+        String runId = prepareWorkflowRunAndGetId();
+        AtomicReference<Map<String, Object>> resultRef = new AtomicReference<>();
 
-		ClientResponse latestDetailsResponse = client.send(HttpMethod.GET, latestRunDetailsUrl, null, headers,
-				client.getAccessToken());
+        // Poll until Airflow has executed at least one task and populated xcom data.
+        // A fixed sleep is unreliable — Awaitility retries so the test passes as soon
+        // as data is ready and fails with a clear timeout if it never arrives.
+        Awaitility.await("latest task info to become available")
+                .atMost(60, TimeUnit.SECONDS)
+                .pollDelay(Duration.ofSeconds(3))
+                .pollInterval(Duration.ofSeconds(5))
+                .until(() -> {
+                    try {
+                        Map<String, Object> details = workflowClient.getLatestTaskInfo(
+                                UserType.PRIVILEGED_USER, workflowName, runId).body();
+                        if (details.get(XCOM_FIELD) == null) return false;
+                        resultRef.set(details);
+                        return true;
+                    } catch (ClientException e) {
+                        return false;
+                    }
+                });
 
-		Map<String, String> latestRunDetails = new ObjectMapper()
-				.readValue(latestDetailsResponse.getEntity(String.class), HashMap.class);
+        assertNotNull(resultRef.get().get(XCOM_FIELD));
+    }
 
-		assertNotNull(latestRunDetails.get(XCOM_FIELD));
-		assertEquals(org.apache.http.HttpStatus.SC_OK, latestDetailsResponse.getStatus(),
-				latestDetailsResponse.toString());
-	}
+    @TestExternalAirflow
+    void testGetLatestTaskDetailsOfWorkflowRunOnExternalAirflow() {
+        String workflowName = prepareWorkflowExternalAirflowAndGetName();
+        String runId = prepareWorkflowRunAndGetId();
+        AtomicReference<Map<String, Object>> resultRef = new AtomicReference<>();
 
-  @TestExternalAirflow
-  void testGetLatestTaskDetailsOfWorkflowRunOnExternalAirflow() throws Exception {
-    String latestRunDetailsUrl = getLatestRunDetailsUrlExternalAirflow();
+        Awaitility.await("latest task info (external airflow) to become available")
+                .atMost(60, TimeUnit.SECONDS)
+                .pollDelay(Duration.ofSeconds(3))
+                .pollInterval(Duration.ofSeconds(5))
+                .until(() -> {
+                    try {
+                        Map<String, Object> details = workflowClient.getLatestTaskInfo(
+                                UserType.PRIVILEGED_USER, workflowName, runId).body();
+                        if (details.get(XCOM_FIELD) == null) return false;
+                        resultRef.set(details);
+                        return true;
+                    } catch (ClientException e) {
+                        return false;
+                    }
+                });
 
-    ClientResponse latestDetailsResponse = client.send(HttpMethod.GET, latestRunDetailsUrl, null, headers,
-        client.getAccessToken());
+        assertNotNull(resultRef.get().get(XCOM_FIELD));
+    }
 
-    Map<String, String> latestRunDetails = new ObjectMapper()
-        .readValue(latestDetailsResponse.getEntity(String.class), HashMap.class);
+    @Test
+    public void testGetLatestTaskDetailsOfNotExistingWorkflow() {
+        ClientException ex = assertThrows(ClientException.class,
+                () -> workflowClient.getLatestTaskInfo(UserType.PRIVILEGED_USER, INVALID_WORKFLOW_NAME, INVALID_WORKFLOW_RUN_ID));
+        assertEquals(HttpStatus.SC_NOT_FOUND, ex.getStatusCode());
+    }
 
-    assertNotNull(latestRunDetails.get(XCOM_FIELD));
-    assertEquals(org.apache.http.HttpStatus.SC_OK, latestDetailsResponse.getStatus(),
-        latestDetailsResponse.toString());
-  }
+    @Test
+    public void testGetLatestTaskDetailsOfNotExistingWorkflowRun() {
+        createAndTrackWorkflow();
+        ClientException ex = assertThrows(ClientException.class,
+                () -> workflowClient.getLatestTaskInfo(UserType.PRIVILEGED_USER, CREATE_WORKFLOW_WORKFLOW_NAME, INVALID_WORKFLOW_RUN_ID));
+        assertEquals(HttpStatus.SC_NOT_FOUND, ex.getStatusCode());
+    }
 
-	@Test
-	public void testGetLatestTaskDetailsOfNotExistingWorkflow() throws Exception {
+    @TestExternalAirflow
+    void testGetLatestTaskDetailsOfNotExistingWorkflowRunOnExternalAirflow() {
+        createAndTrackWorkflowExternalAirflow();
+        ClientException ex = assertThrows(ClientException.class,
+                () -> workflowClient.getLatestTaskInfo(UserType.PRIVILEGED_USER, getLastCreatedWorkflowName(), INVALID_WORKFLOW_RUN_ID));
+        assertEquals(HttpStatus.SC_NOT_FOUND, ex.getStatusCode());
+    }
 
-		String notExistingWorkflowUrl = String.format(GET_LATEST_DETAILS_BY_ID_API_ENDPOINT, INVALID_WORKFLOW_NAME,
-				INVALID_WORKFLOW_RUN_ID);
+    @Test
+    public void testGetLatestTaskDetailsWithoutAccess() {
+        String workflowName = prepareWorkflowAndGetName();
+        String runId = prepareWorkflowRunAndGetId();
+        ClientException ex = assertThrows(ClientException.class,
+                () -> workflowClient.getLatestTaskInfo(UserType.NO_ACCESS_USER, workflowName, runId));
+        assertEquals(HttpStatus.SC_UNAUTHORIZED, ex.getStatusCode());
+    }
 
-		ClientResponse response = client.send(HttpMethod.GET, notExistingWorkflowUrl, null, headers,
-				client.getAccessToken());
-		assertEquals(org.apache.http.HttpStatus.SC_NOT_FOUND, response.getStatus());
-	}
+    private String prepareWorkflowAndGetName() {
+        createAndTrackWorkflow();
+        return CREATE_WORKFLOW_WORKFLOW_NAME;
+    }
 
-	@Test
-	public void testGetLatestTaskDetailsOfNotExistingWorkflowRun() throws Exception {
-    createAndTrackWorkflow();
+    private String prepareWorkflowExternalAirflowAndGetName() {
+        createAndTrackWorkflowExternalAirflow();
+        return getLastCreatedWorkflowName();
+    }
 
-		String existingWorkflowNotExistingRunUrl = String.format(GET_LATEST_DETAILS_BY_ID_API_ENDPOINT,
-				CREATE_WORKFLOW_WORKFLOW_NAME, INVALID_WORKFLOW_RUN_ID);
-
-		ClientResponse response = client.send(HttpMethod.GET, existingWorkflowNotExistingRunUrl, null, headers,
-				client.getAccessToken());
-		assertEquals(org.apache.http.HttpStatus.SC_NOT_FOUND, response.getStatus());
-	}
-
-  @TestExternalAirflow
-  void testGetLatestTaskDetailsOfNotExistingWorkflowRunOnExternalAirflow() throws Exception {
-    createAndTrackWorkflowExternalAirflow();
-
-    String existingWorkflowNotExistingRunUrl = String.format(GET_LATEST_DETAILS_BY_ID_API_ENDPOINT, getLastCreatedWorkflowName(), INVALID_WORKFLOW_RUN_ID);
-
-    ClientResponse response = client.send(HttpMethod.GET, existingWorkflowNotExistingRunUrl, null, headers,
-        client.getAccessToken());
-    assertEquals(org.apache.http.HttpStatus.SC_NOT_FOUND, response.getStatus());
-  }
-
-  @Test
-	public void testGetLatestTaskDetailsWithoutAccess() throws Exception {
-		String latestRunDetailsUrl = getLatestRunDetailsUrl();
-
-		ClientResponse latestDetailsResponse = client.send(HttpMethod.GET, latestRunDetailsUrl, null, headers,
-				client.getNoDataAccessToken());
-
-		assertEquals(401, latestDetailsResponse.getStatus());
-	}
-
-	protected String getLatestRunDetailsUrl() throws Exception {
-    createAndTrackWorkflow();
-    Map<String, String> workflowRunInfo = createAndTrackWorkflowRun();
-
-		String runId = workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD);
-
-		String latestRunDetailsUrl = String.format(GET_LATEST_DETAILS_BY_ID_API_ENDPOINT, CREATE_WORKFLOW_WORKFLOW_NAME,
-				runId);
-
-		Thread.sleep(5000);
-		return latestRunDetailsUrl;
-	}
-
-  private String getLatestRunDetailsUrlExternalAirflow() throws Exception {
-    createAndTrackWorkflowExternalAirflow();
-    Map<String, String> workflowRunInfo = createAndTrackWorkflowRunExternalAirflow();
-
-    String runId = workflowRunInfo.get(WORKFLOW_RUN_ID_FIELD);
-
-    String latestRunDetailsUrl = String.format(GET_LATEST_DETAILS_BY_ID_API_ENDPOINT, getLastCreatedWorkflowName(),
-        runId);
-
-    Thread.sleep(5000);
-    return latestRunDetailsUrl;
-  }
-
+    private String prepareWorkflowRunAndGetId() {
+        WorkflowRunInfo workflowRunInfo = createAndTrackWorkflowRun();
+        return workflowRunInfo.runId();
+    }
 }

@@ -16,5 +16,12 @@ public class WorkflowEngineRequest {
   private long executionTimeStamp = System.currentTimeMillis();
   private boolean isDeployedThroughWorkflowService;
   private final boolean isSystemWorkflow;
+  /**
+   * Airflow engine that owns this request (see
+   * {@link org.opengroup.osdu.workflow.model.AirflowEngineVersions}). Set to the configured default
+   * engine on trigger and to the run's persisted engine on status/log lookups. When {@code null},
+   * providers fall back to the Airflow 2 engine for backward compatibility.
+   */
+  private String engineVersion;
 
 }

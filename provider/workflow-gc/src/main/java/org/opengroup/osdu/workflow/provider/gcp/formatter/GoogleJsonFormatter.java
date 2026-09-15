@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Map;
 
 public class GoogleJsonFormatter extends JacksonJsonFormatter {
+
   @Override
   public String toJsonString(Map map) throws IOException {
     map.put("severity", map.remove("level"));

@@ -250,5 +250,3 @@ else
     export DATA_PARTITION_ID="system"
     bootstrap_workflow_gc
 fi
-
-touch /tmp/bootstrap_ready
