@@ -10,6 +10,9 @@ variables:
   # End azure specific variables
   ACCEPTANCE_TEST_DIR: "workflow-acceptance-test"
   EXPOSE_FEATUREFLAG_ENABLED: "false"
+  CIMPL: "1"
+  CIMPL_STACK: "1"
+  DEV: "1"
 
 include:
   - project: "osdu/platform/ci-cd-pipelines"
