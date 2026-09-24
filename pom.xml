@@ -559,12 +559,6 @@
       </modules>
     </profile>
     <profile>
-      <id>aws</id>
-      <modules>
-        <module>provider/workflow-aws</module>
-      </modules>
-    </profile>
-    <profile>
       <id>azure</id>
       <modules>
         <module>provider/workflow-azure</module>
