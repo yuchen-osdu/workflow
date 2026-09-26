@@ -357,6 +357,80 @@ as per airflow community, airflow experimnetal API will be discontinued. with he
 * override and disable integration test case `org.opengroup.osdu.workflow.workflow.v3.WorkflowRunV3IntegrationTests.triggerWorkflowRun_should_returnBadRequest_when_givenDuplicateRunId()` in provider level.
 * override and enable integration test case `org.opengroup.osdu.workflow.workflow.v3.WorkflowRunV3IntegrationTests.triggerWorkflowRun_should_returnConflict_when_givenDuplicateRunId_with_airflow2_stable_API()` in provider level
 
+## Airflow 3 support
+
+Airflow 2's REST API is deprecated as Airflow 2 approaches end of life. Airflow 3 is
+supported alongside Airflow 2 through a single configuration knob, `osdu.airflow.version`,
+with per-run engine ownership so an in-place Airflow 2 → Airflow 3 migration keeps
+in-flight Airflow 2 runs tracked on Airflow 2 while new runs go to Airflow 3.
+
+#### Engine selection (`osdu.airflow.version`)
+
+| Value | Engine | API |
+| ------ | ------ | ------ |
+| `v1` | Airflow 1.x | `api/experimental/...` |
+| `airflow2` (or legacy alias `v2`) | Airflow 2.x | `api/v1/...` |
+| `airflow3` (or short alias `v3`) | Airflow 3.x | `api/v2/...` (native JWT bearer auth via `POST /auth/token`) |
+
+* **Default when unset:** if neither `osdu.airflow.version` nor `osdu.airflow.version2`
+  is set, the engine defaults to **`v1`** (Airflow 1 `api/experimental`), preserving the
+  historical behaviour — a missing or `false` `osdu.airflow.version2` has always meant the
+  Airflow 1 experimental API. Providers that want Airflow 2/3 set one of the two properties
+  explicitly (azure and core-plus ship `osdu.airflow.version=airflow2`). The legacy
+  `osdu.airflow.version2=true` continues to select Airflow 2.
+* The engine that starts a run (and the engine a DAG is created on) is persisted as the
+  run's / workflow's engine owner. Status, log, delete and `latestInfo` reads are routed
+  to that owning engine, independent of the currently configured engine. Runs/workflows
+  with no persisted engine version fall back to Airflow 2.
+* The engine version is **not** surfaced in any API response body.
+
+#### Airflow 3 connection properties
+
+| Key | Value | Description |
+| ------ | ------ | ------ |
+| osdu.airflow.version | `airflow3` | selects the Airflow 3 backend for new runs |
+| osdu.airflow.airflow3.url | `<_airflow3_url_>` | Airflow 3 base URL; typically an internal in-mesh Kubernetes URL over `http` (e.g. `http://airflow3-api-server...:8080`), same as the Airflow 2 URL |
+| osdu.airflow.airflow3.username | `<_airflow3_username_>` | username for the `api/v2` JWT token exchange |
+| osdu.airflow.airflow3.password | `<_airflow3_password_>` | password for the `api/v2` JWT token exchange |
+
+#### Onboarding a CSP to Airflow 3
+
+The `workflow-core` module provides the Airflow 3 building blocks for free: the AF3 `api/v2`
+client, JWT authentication, the per-run engine dispatcher, the engine-version model, and the
+SPI providers. Because each CSP with a custom provider (AWS, Azure, IBM) ships its own engine
+service and persistence layer, that wiring is done per provider. Azure is the reference
+implementation. The steps are:
+
+1. **Persist engine ownership** — add an `engineVersion` field to the provider's run and
+   workflow storage models and repository mapping, so each run/workflow records which engine
+   created it.
+2. **Wire per-run routing** — make the provider's engine service select the engine from each
+   run's persisted `engineVersion` (adopt the core dispatcher or replicate the Azure selector
+   pattern).
+3. **Add AF3 config binding** — expose `osdu.airflow.version` and
+   `osdu.airflow.airflow3.url/username/password` in the provider config, sourced from the CSP's
+   secret store.
+4. **Legacy fallback** — ensure a null/unknown `engineVersion` routes to Airflow 2, so in-flight
+   and pre-existing runs stay tracked on Airflow 2.
+5. **Deploy a side-by-side Airflow 3 backend** — provision Airflow 3 (e.g. a managed or
+   self-managed instance) with the OSDU DAGs, Entitlements access, and required PyPi packages
+   (infrastructure, not service code).
+6. **Validate** — enable the AF3-gated acceptance tests (`AIRFLOW3_TESTS_ENABLED`) against the
+   AF3-configured deployment, plus provider unit tests.
+
+A CSP built on the `workflow-core-plus` reference engine (no custom engine service) gets
+Airflow 3 largely through configuration and deployment; a CSP with a custom provider engine
+performs the steps above. Either way this is a provider-scoped effort, not a core rewrite.
+
+> **Important Airflow 3 Configuration:** As with external Airflow, the Workflow service **will
+> not** provision or configure the Airflow 3 backend. It is the **CSP's responsibility** to set
+> up the targeted Airflow 3 instance so it can operate with OSDU. This includes ensuring:
+> - Proper access to the OSDU Entitlements service.
+> - All required PyPi packages and environment variables are present.
+> - All necessary DAGs are deployed to the Airflow 3 instance.
+>
+> For details and scripts on what a typical OSDU Airflow configuration looks like, please refer to the [Airflow Bootstrap Repository](https://community.opengroup.org/osdu/platform/deployment-and-operations/base-containers-cimpl/airflow-infra-bootstrap).
+
 ## External Airflow support
 
 The Workflow service supports integration with external Airflow instances. To run DAGs in external Airflow, `externalAirflowSecret` property must be set in the `registrationInstructions` when creating a workflow.

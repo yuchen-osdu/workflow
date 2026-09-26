@@ -21,4 +21,5 @@ public class WorkflowMetadataDoc {
   // This tells if the DAG is deployed to airflow through workflow service
   private Boolean isRegisteredByWorkflowService;
   private Map<String, Object> registrationInstructions;
+  private String engineVersion;
 }

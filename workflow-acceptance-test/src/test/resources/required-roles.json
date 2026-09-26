@@ -1,0 +1,15 @@
+{
+  "PRIVILEGED_USER": [
+    "users",
+    "service.entitlements.user",
+    "service.workflow.system-admin",
+    "service.workflow.admin",
+    "service.workflow.creator",
+    "service.workflow.viewer",
+    "service.legal.admin",
+    "service.legal.editor"
+  ],
+  "NO_ACCESS_USER": [
+    "users"
+  ]
+}
