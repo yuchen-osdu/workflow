@@ -31,9 +31,6 @@ include:
     file: "publishing/pages.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
-    file: "cloud-providers/gc-global.yml"
-
-  - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/azure.yml"
 
   - project: "osdu/platform/ci-cd-pipelines"
@@ -42,12 +39,7 @@ include:
   - project: "osdu/platform/ci-cd-pipelines"
     file: "cloud-providers/azure-one-pipeline.yml"
 
-  - project: "osdu/platform/ci-cd-pipelines"
-    file: "cloud-providers/gc-one-pipeline.yml"
-
   - local: "devops/core-plus/pipeline/override-stages.yml"
-
-  - local: "devops/gc/pipeline/override-stages.yml"
 
 download_plugins:
   image: maven:3.8.3-openjdk-17-slim

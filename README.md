@@ -15,8 +15,7 @@
   * [PUT /v1/workflow/{workflow_name}/workflowRun/{runId}](#put-v1workflowworkflow_nameworkflowrunrunid)
 * [Airflow 2.0 support](#airflow-2-support)
 * [Service Provider Interfaces](#workflow-service-provider-interfaces)
-* [Google Cloud implementation](#gc-implementation)
-* [Firestore](#firestore-collections)
+* [Google Cloud implementation](#google-cloud-implementation)
 
 ## Introduction
 
@@ -552,12 +551,4 @@ All the Swagger and OpenAPI related common properties are managed here [swagger.
 
 ## Google Cloud implementation
 
-The Google Cloud Identity and Access Management service account for the Workflow service must have the
-**Composer User** and **Cloud Datastore User** roles.
-
-Note that obtaining user credentials for Application Default Credentials isn't suitable for the
-development purposes because signing a blob is only available with the service account credentials.
-Remember to set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable. Follow the [instructions
-on the Google developer's portal][application-default-credentials].
-
-* Documentation for the Google Cloud Datastore implementation is located in [here](./provider/workflow-gc/README.md)
+The Google Cloud implementation has been moved to [gc-osdu-services](https://community.opengroup.org/osdu/platform/deployment-and-operations/base-containers-gcp/gc-osdu-services).

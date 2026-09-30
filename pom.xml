@@ -570,12 +570,6 @@
         <module>provider/workflow-ibm</module>
       </modules>
     </profile>
-    <profile>
-      <id>gc</id>
-      <modules>
-        <module>provider/workflow-gc</module>
-      </modules>
-    </profile>
   </profiles>
 
 </project>
