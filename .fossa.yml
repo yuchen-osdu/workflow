@@ -8,27 +8,23 @@ cli:
   project: Ingestion Workflow
 analyze:
   modules:
-  - name: os-workflow
-    type: mvn
-    target: pom.xml
-    path: .
-  - name: workflow-core
-    type: mvn
-    target: workflow-core/pom.xml
-    path: .
-  - name: workflow-core-plus
-    type: mvn
-    target: workflow-core-plus/pom.xml
-    path: .
-  - name: workflow-azure
-    type: mvn
-    target: provider/workflow-azure/pom.xml
-    path: .
-  - name: workflow-gc
-    type: mvn
-    target: provider/workflow-gc/pom.xml
-    path: .
-  - name: workflow-ibm
-    type: mvn
-    target: provider/workflow-ibm/pom.xml
-    path: .
+    - name: os-workflow
+      type: mvn
+      target: pom.xml
+      path: .
+    - name: workflow-core
+      type: mvn
+      target: workflow-core/pom.xml
+      path: .
+    - name: workflow-core-plus
+      type: mvn
+      target: workflow-core-plus/pom.xml
+      path: .
+    - name: workflow-azure
+      type: mvn
+      target: provider/workflow-azure/pom.xml
+      path: .
+    - name: workflow-ibm
+      type: mvn
+      target: provider/workflow-ibm/pom.xml
+      path: .
