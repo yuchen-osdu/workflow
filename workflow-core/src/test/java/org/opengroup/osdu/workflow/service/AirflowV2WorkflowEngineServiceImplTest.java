@@ -58,7 +58,7 @@ class AirflowV2WorkflowEngineServiceImplTest {
           "{\"%s\":\"%s\",\"%s\":\"%s\"}",
           AirflowV2WorkflowEngineServiceImpl.EXECUTION_DATE_PARAMETER_NAME,
           RESPONSE_EXECUTION_DATE,
-          AirflowV2WorkflowEngineServiceImpl.RUN_ID_PARAMETER_NAME_STABLE,
+          AirflowV2WorkflowEngineServiceImpl.RUN_ID_PARAMETER_NAME,
           RESPONSE_DAG_RUN_ID);
   private static final String EXECUTION_CONTEXT = "execution_context";
   private static final String KEY_USER_ID = "userId";
@@ -210,6 +210,21 @@ class AirflowV2WorkflowEngineServiceImplTest {
     when(clientResponse.getResponseBody()).thenReturn(INVALID_JSON);
     when(airflowApiClient.callAirflow(any(), any(), any(), any(), any()))
         .thenReturn(clientResponse);
+
+    Optional<String> version = service.getVersion();
+
+    assertTrue(version.isPresent());
+    assertEquals(AirflowV2WorkflowEngineServiceImpl.NOT_AVAILABLE, version.get());
+  }
+
+  @Test
+  void should_ReturnNotAvailable_when_GetVersionAirflowCallFails() {
+    when(airflowApiClient.callAirflow(any(), any(), any(), any(), any()))
+        .thenThrow(
+            new AppException(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Error calling airflow",
+                "Airflow endpoint is unavailable"));
 
     Optional<String> version = service.getVersion();
 

@@ -155,7 +155,7 @@ public class GcpOsmCommonMetadataRepository implements ICommonMetadataRepository
   private Destination getDestination(String tenantName, boolean isSystemWorkflow) {
     if (isSystemWorkflow) {
       return getDestinationForSystemWorkflow(
-          tenantName,
+          workflowConfig.getSharedTenantName(),
           workflowConfig.getSystemWorkflowNamespace(),
           workflowConfig.getSystemWorkflowKind());
     } else {
