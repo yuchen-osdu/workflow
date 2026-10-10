@@ -11,12 +11,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConditionalOnProperty(name = "osdu.airflow.version2.enabled", havingValue = "true",
-    matchIfMissing = false)
+@ConditionalOnExpression("!'v1'.equalsIgnoreCase('${osdu.airflow.version:airflow2}')")
 public class AirflowV2WorkflowEngineUtil implements IAirflowWorkflowEngineUtil {
   private static final Logger LOGGER = LoggerFactory.getLogger(AirflowV2WorkflowEngineUtil.class);
   private static final String FILE_NAME_PREFIX = ".py";

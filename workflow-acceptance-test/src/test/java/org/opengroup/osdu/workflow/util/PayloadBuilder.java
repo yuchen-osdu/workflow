@@ -1,11 +1,22 @@
+/*
+ *  Copyright 2020-2026 Google LLC
+ *  Copyright 2020-2026 EPAM Systems, Inc
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.opengroup.osdu.workflow.util;
 
-import static java.util.Collections.singletonList;
-import static org.opengroup.osdu.workflow.consts.DefaultVariable.DEFAULT_DATA_PARTITION_ID_TENANT1;
-import static org.opengroup.osdu.workflow.consts.DefaultVariable.DOMAIN;
-import static org.opengroup.osdu.workflow.consts.DefaultVariable.LEGAL_TAG;
-import static org.opengroup.osdu.workflow.consts.DefaultVariable.OTHER_RELEVANT_DATA_COUNTRIES;
-import static org.opengroup.osdu.workflow.consts.DefaultVariable.getEnvironmentVariableOrDefaultKey;
 import static org.opengroup.osdu.workflow.consts.TestConstants.CREATE_WORKFLOW_WORKFLOW_NAME;
 import static org.opengroup.osdu.workflow.consts.TestConstants.DATA_PARTITION_ID_TENANT;
 import static org.opengroup.osdu.workflow.consts.TestConstants.WORKFLOW_NAME_EXTERNAL_AIRFLOW;
@@ -13,142 +24,71 @@ import static org.opengroup.osdu.workflow.consts.TestConstants.WORKFLOW_NAME_EXT
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
+import org.opengroup.osdu.core.test.client.model.workflow.CreateWorkflowRequest;
+import org.opengroup.osdu.core.test.client.model.workflow.CreateWorkflowRunRequest;
+import org.opengroup.osdu.core.test.client.model.workflow.UpdateWorkflowRunRequest;
 import org.opengroup.osdu.workflow.consts.TestConstants;
 
 public class PayloadBuilder {
 
-  private static final String EXTERNAL_AIRFLOW_SECRET_REGISTRATION_INSTRUCTIONS_KEY = "externalAirflowSecret";
-  private static final String DAG_NAME = "dagName";
+	private static final String EXTERNAL_AIRFLOW_SECRET_REGISTRATION_INSTRUCTIONS_KEY = "externalAirflowSecret";
+	private static final String DAG_NAME = "dagName";
+	private static final String TEST_WORKFLOW_DESCRIPTION = "Test workflow record for integration tests.";
 
-  public static String buildWorkflowIdPayload(String workflowId) {
-		Map<String, Object> payload = new HashMap<>();
-
-		payload.put("WorkflowID", workflowId);
-
-		return new Gson().toJson(payload);
+	public static CreateWorkflowRequest buildCreateWorkflowValidPayload() {
+		return new CreateWorkflowRequest(
+				CREATE_WORKFLOW_WORKFLOW_NAME,
+				new HashMap<>(),
+				TEST_WORKFLOW_DESCRIPTION);
 	}
 
-	public static String buildStartWorkflow(Map<String, Object> context, String type) {
-		Map<String, Object> payload = new HashMap<>();
-
-		payload.put("WorkflowType", type);
-		payload.put("DataType", "opaque");
-		payload.put("Context", context);
-
-		return new Gson().toJson(payload);
+	/**
+	 * Builds an external-airflow create-workflow payload with a UUID-suffixed workflowName per
+	 * call to avoid 409 Conflict from stale rows left by prior failed/aborted runs. The DAG
+	 * pointer ({@code dagName} in {@code registrationInstructions}) is unchanged, so it still
+	 * targets the pre-deployed {@code TEST_DAG_NAME_EXTERNAL_AIRFLOW} DAG. Tests that need to
+	 * post the same payload twice (e.g. duplicate-create) MUST capture the result of one call
+	 * and reuse it; otherwise each call yields a different workflowName.
+	 *
+	 * <p>Hyphens are stripped from the UUID so the resulting name fits the service-side
+	 * {@code ^[a-zA-Z0-9._-]{1,64}$} validator: {@code WORKFLOW_NAME_EXTERNAL_AIRFLOW} (default
+	 * 31 chars) + {@code "-"} + 32-char UUID = 64 chars.
+	 */
+	public static CreateWorkflowRequest buildCreateWorkflowValidPayloadExternalAirflow() {
+		return new CreateWorkflowRequest(
+				WORKFLOW_NAME_EXTERNAL_AIRFLOW + "-" + UUID.randomUUID().toString().replace("-", ""),
+				Map.of(
+						DAG_NAME, TestConstants.TEST_DAG_NAME_EXTERNAL_AIRFLOW,
+						EXTERNAL_AIRFLOW_SECRET_REGISTRATION_INSTRUCTIONS_KEY, TestConstants.EXTERNAL_AIRFLOW_SECRET),
+				"Test workflow record for integration tests(external Airflow).");
 	}
 
-	public static String buildUpdateStatus(String workflowId, String status) {
-		Map<String, Object> payload = new HashMap<>();
-
-		payload.put("WorkflowID", workflowId);
-		payload.put("Status", status);
-
-		return new Gson().toJson(payload);
+	public static CreateWorkflowRequest buildCreateWorkflowPayloadWithIncorrectDag() {
+		return new CreateWorkflowRequest(
+				CREATE_WORKFLOW_WORKFLOW_NAME,
+				Map.of(DAG_NAME, "incorrectDagName"),
+				TEST_WORKFLOW_DESCRIPTION);
 	}
 
-	public static Map<String, Object> buildContext() {
-		Map<String, Object> context = new HashMap<>();
-
-		Map<String, Object> legal = new HashMap<>();
-		legal.put("legaltags", singletonList(getEnvironmentVariableOrDefaultKey(LEGAL_TAG)));
-		legal.put("otherRelevantDataCountries",
-				singletonList(getEnvironmentVariableOrDefaultKey(OTHER_RELEVANT_DATA_COUNTRIES)));
-
-		Map<String, Object> acl = new HashMap<>();
-		acl.put("viewers", singletonList(getAcl()));
-
-		context.put("legal", legal);
-		context.put("acl", acl);
-
-		return context;
+	public static CreateWorkflowRequest buildCreateWorkflowPayloadWithIncorrectWorkflowName() {
+		return new CreateWorkflowRequest(
+				"invalid workflow name",
+				new HashMap<>(),
+				TEST_WORKFLOW_DESCRIPTION);
 	}
 
-	private static String getAcl() {
-		return String.format("data.viewers@%s", getAclSuffix());
+	public static CreateWorkflowRequest buildCreateWorkflowPayloadWithNoWorkflowName() {
+		return new CreateWorkflowRequest(
+				"",
+				new HashMap<>(),
+				TEST_WORKFLOW_DESCRIPTION);
 	}
 
-	private static String getAclSuffix() {
-		return String.format("%s.%s", getEnvironmentVariableOrDefaultKey(DEFAULT_DATA_PARTITION_ID_TENANT1),
-				getEnvironmentVariableOrDefaultKey(DOMAIN));
+	public static CreateWorkflowRequest buildCreateWorkflowPayloadWithOnlyWorkflowName() {
+		return new CreateWorkflowRequest(CREATE_WORKFLOW_WORKFLOW_NAME, null, null);
 	}
 
-	public static String buildCreateWorkflowValidPayload() {
-		Map<String, Object> payload = new HashMap<>();
-		payload.put("workflowName", CREATE_WORKFLOW_WORKFLOW_NAME);
-		payload.put("registrationInstructions", new HashMap<String, String>());
-		payload.put("description", "Test workflow record for integration tests.");
-
-		return new Gson().toJson(payload);
-	}
-
-  /**
-   * Builds an external-airflow create-workflow payload with a UUID-suffixed workflowName per
-   * call to avoid 409 Conflict from stale rows left by prior failed/aborted runs. The DAG
-   * pointer ({@code dagName} in {@code registrationInstructions}) is unchanged, so it still
-   * targets the pre-deployed {@code TEST_DAG_NAME_EXTERNAL_AIRFLOW} DAG. Tests that need to
-   * post the same payload twice (e.g. duplicate-create) MUST capture the result of one call
-   * and reuse it; otherwise each call yields a different workflowName.
-   *
-   * <p>Hyphens are stripped from the UUID so the resulting name fits the service-side
-   * {@code ^[a-zA-Z0-9._-]{1,64}$} validator: {@code WORKFLOW_NAME_EXTERNAL_AIRFLOW} (default
-   * 31 chars) + {@code "-"} + 32-char UUID = 64 chars.
-   */
-  public static String buildCreateWorkflowValidPayloadExternalAirflow() {
-    Map<String, Object> payload = new HashMap<>();
-    payload.put(
-        "workflowName",
-        WORKFLOW_NAME_EXTERNAL_AIRFLOW + "-" + UUID.randomUUID().toString().replace("-", ""));
-    payload.put(
-        "registrationInstructions",
-        Map.of(
-            DAG_NAME, TestConstants.TEST_DAG_NAME_EXTERNAL_AIRFLOW,
-            EXTERNAL_AIRFLOW_SECRET_REGISTRATION_INSTRUCTIONS_KEY,
-                TestConstants.EXTERNAL_AIRFLOW_SECRET));
-    payload.put("description", "Test workflow record for integration tests(external Airflow).");
-
-    return new Gson().toJson(payload);
-  }
-
-	public static String buildCreateWorkflowPayloadWithIncorrectDag() {
-		Map<String, Object> payload = new HashMap<>();
-		Map<String, String> registrationInstructions = new HashMap<>();
-		registrationInstructions.put(DAG_NAME, "incorrectDagName");
-		payload.put("workflowName", CREATE_WORKFLOW_WORKFLOW_NAME);
-		payload.put("description", "Test workflow record for integration tests.");
-		payload.put("registrationInstructions", registrationInstructions);
-
-		return new Gson().toJson(payload);
-	}
-
-	public static String buildCreateWorkflowPayloadWithIncorrectWorkflowName() {
-		Map<String, Object> payload = new HashMap<>();
-		payload.put("workflowName", "-абвгд-");
-		payload.put("description", "Test workflow record for integration tests.");
-
-		return new Gson().toJson(payload);
-	}
-
-	public static String buildCreateWorkflowPayloadWithNoWorkflowName() {
-		Map<String, Object> payload = new HashMap<>();
-		payload.put("workflowName", "");
-		payload.put("registrationInstructions", new HashMap<String, String>());
-		payload.put("description", "Test workflow record for integration tests.");
-		return new Gson().toJson(payload);
-	}
-
-	public static String buildCreateWorkflowPayloadWithOnlyWorkflowName() {
-		Map<String, Object> payload = new HashMap<>();
-		payload.put("workflowName", CREATE_WORKFLOW_WORKFLOW_NAME);
-		return new Gson().toJson(payload);
-	}
-
-	public static String buildCreateWorkflowRunValidPayload() {
-		Map<String, Object> requestBody = new HashMap<>();
+	public static CreateWorkflowRunRequest buildCreateWorkflowRunValidPayload() {
 		Map<String, Object> executionContext = new HashMap<>();
 		Map<String, Object> payload = new HashMap<>();
 
@@ -158,38 +98,27 @@ public class PayloadBuilder {
 		payload.put("appKey", "test");
 
 		executionContext.put("payload", payload);
-		requestBody.put("executionContext", executionContext);
-		return new Gson().toJson(requestBody);
+		return new CreateWorkflowRunRequest(executionContext, null);
 	}
 
-	public static String buildUpdateWorkflowPayload() {
-		Map<String, Object> payload = new HashMap<>();
-		payload.put("status", "finished");
-		return new Gson().toJson(payload);
+	public static UpdateWorkflowRunRequest buildUpdateWorkflowPayload() {
+		return new UpdateWorkflowRunRequest("finished");
 	}
 
-	public static String buildCreateWorkflowRunValidPayloadWithGivenRunId(String runId) throws JsonProcessingException {
-		String payload = buildCreateWorkflowRunValidPayload();
-		Map<String, Object> requestBody = new ObjectMapper().readValue(payload, HashMap.class);
-		requestBody.put("runId", runId);
-		return new Gson().toJson(requestBody);
+	public static CreateWorkflowRunRequest buildCreateWorkflowRunValidPayloadWithGivenRunId(String runId) {
+		CreateWorkflowRunRequest request = buildCreateWorkflowRunValidPayload();
+		return new CreateWorkflowRunRequest(request.executionContext(), runId);
 	}
 
-	public static String buildUpdateWorkflowRunValidPayloadWithGivenStatus(String status) {
-		Map<String, Object> payload = new HashMap<>();
-		payload.put("status", status);
-		return new Gson().toJson(payload);
+	public static UpdateWorkflowRunRequest buildUpdateWorkflowRunValidPayloadWithGivenStatus(String status) {
+		return new UpdateWorkflowRunRequest(status);
 	}
 
-	public static String buildUpdateWorkflowRunInvalidPayloadStatus() {
-		Map<String, Object> payload = new HashMap<>();
-		payload.put("status", "invalid-status");
-		return new Gson().toJson(payload);
+	public static UpdateWorkflowRunRequest buildUpdateWorkflowRunInvalidPayloadStatus() {
+		return new UpdateWorkflowRunRequest("invalid-status");
 	}
 
-	public static String buildUpdateWorkflowRunInvalidRequestPayload() {
-		Map<String, Object> payload = new HashMap<>();
-		payload.put("sTaTus", "running");
-		return new Gson().toJson(payload);
+	public static Map<String, Object> buildUpdateWorkflowRunInvalidRequestPayload() {
+		return Map.of("sTaTus", "running");
 	}
 }
