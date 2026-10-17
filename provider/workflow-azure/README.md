@@ -69,7 +69,11 @@ az keyvault secret show --vault-name $KEY_VAULT_NAME --name $KEY_VAULT_SECRET_NA
 | `OSDU_AIRFLOW_URL` | ex `http://foo.org/test/airflow` | Airflow API endpoint | no |
 | `OSDU_AIRFLOW_USERNAME` | ******** | User Name | yes |
 | `OSDU_AIRFLOW_PASSWORD` | ******** | Airflow API password | yes |
-| `OSDU_AIRFLOW_VERSION2_ENABLED` | ex "false" | Enable Airflow Version 2 stable API| no |
+| `OSDU_AIRFLOW_VERSION` | `airflow2` (default) or `airflow3` | Selects the Airflow engine for **new** workflow triggers. Replaces the legacy `OSDU_AIRFLOW_VERSION2_ENABLED` toggle. | no |
+| `OSDU_AIRFLOW_AIRFLOW3_URL` | ex `http://airflow3-api-server:8080` | Airflow 3 `/api/v2` endpoint. Required only when `OSDU_AIRFLOW_VERSION=airflow3`; unused otherwise. | no |
+| `OSDU_AIRFLOW_AIRFLOW3_USERNAME` | ******** | Airflow 3 user for JWT auth against the `/api/v2` auth manager. | yes |
+| `OSDU_AIRFLOW_AIRFLOW3_PASSWORD` | ******** | Airflow 3 password for JWT auth. | yes |
+| `OSDU_AIRFLOW_AIRFLOW3_SHARE_NAME` | ex `airflow3dags` (default) | Azure File Share holding the Airflow 3 DAGs (side-by-side with the Airflow 2 DAG share). | no |
 | `adf_url` | ***** | ADF API endpoint | yes |
 | `argo_url` | ex `http://foo.org/test/workflows/argo` | Argo API endpoint | no |
 | `argo_token` | ***** | Argo token | yes |

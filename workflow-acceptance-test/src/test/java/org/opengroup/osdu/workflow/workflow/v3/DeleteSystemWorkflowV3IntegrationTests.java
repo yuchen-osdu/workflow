@@ -1,92 +1,71 @@
+/*
+ *  Copyright 2020-2026 Google LLC
+ *  Copyright 2020-2026 EPAM Systems, Inc
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package org.opengroup.osdu.workflow.workflow.v3;
 
+import org.opengroup.osdu.core.test.auth.UserType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.opengroup.osdu.workflow.consts.TestConstants.CREATE_WORKFLOW_WORKFLOW_NAME;
-import static org.opengroup.osdu.workflow.consts.TestConstants.GET_SYSTEM_WORKFLOW_BY_ID_URL;
-
-import java.util.ArrayList;
-
-import javax.ws.rs.HttpMethod;
-
-import org.apache.http.HttpStatus;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.opengroup.osdu.workflow.util.HTTPClient;
-import org.opengroup.osdu.workflow.util.v3.TestBase;
-
-import com.sun.jersey.api.client.ClientResponse;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.core5.http.HttpStatus;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.opengroup.osdu.core.test.client.ClientException;
+import org.opengroup.osdu.core.test.client.HttpResponse;
+import org.opengroup.osdu.workflow.util.BaseWorkflowAcceptanceTest;
 
 @Slf4j
-public final class DeleteSystemWorkflowV3IntegrationTests extends TestBase {
+public final class DeleteSystemWorkflowV3IntegrationTests extends BaseWorkflowAcceptanceTest {
 
-	@BeforeEach
-	@Override
-	public void setup() throws Exception {
-		this.client = new HTTPClient();
-		this.headers = client.getCommonHeaderWithoutPartition();
-		try {
-			deleteTestSystemWorkflows(CREATE_WORKFLOW_WORKFLOW_NAME);
-		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-		}
-	}
+    @BeforeEach
+    @Override
+    public void setup() {
+        super.setup();
+        workflowClient.cleanup("system:" + CREATE_WORKFLOW_WORKFLOW_NAME);
+    }
 
-	@AfterEach
-	@Override
-	public void tearDown() {
-		deleteAllTestWorkflowRecords();
-		this.client = null;
-		this.headers = null;
-		this.createdWorkflowsWorkflowNames = new ArrayList<>();
-	}
+    @Test
+    public void should_delete_when_givenValidWorkflowName() {
+        createAndTrackSystemWorkflow();
 
-	private void deleteAllTestWorkflowRecords() {
-		createdWorkflowsWorkflowNames.stream().forEach(workflowName -> {
-			try {
-				deleteTestSystemWorkflows(workflowName);
-			} catch (Exception e) {
-				log.error(e.getMessage(), e);
-			}
-		});
-	}
+        HttpResponse<Void> deleteResponse = workflowClient.deleteSystemWorkflow(UserType.PRIVILEGED_USER,
+                CREATE_WORKFLOW_WORKFLOW_NAME);
+        assertEquals(HttpStatus.SC_NO_CONTENT, deleteResponse.statusCode());
+    }
 
-	@Test
-	public void should_delete_when_givenValidWorkflowName() throws Exception {
-    createAndTrackSystemWorkflow();
+    @Test
+    public void should_ReturnNotFound_when_givenInvalidWorkflowName() {
+        createAndTrackSystemWorkflow();
 
-    ClientResponse deleteResponse = client.send(HttpMethod.DELETE,
-				String.format(GET_SYSTEM_WORKFLOW_BY_ID_URL, CREATE_WORKFLOW_WORKFLOW_NAME), null, headers,
-				client.getAccessToken());
-		assertEquals(HttpStatus.SC_NO_CONTENT, deleteResponse.getStatus());
-	}
+        ClientException ex = assertThrows(ClientException.class,
+                () -> workflowClient.deleteSystemWorkflow(UserType.PRIVILEGED_USER, INVALID_WORKFLOW_NAME));
+        assertEquals(HttpStatus.SC_NOT_FOUND, ex.getStatusCode());
+    }
 
-	@Test
-	public void should_ReturnNotFound_when_givenInvalidWorkflowName() throws Exception {
-    createAndTrackSystemWorkflow();
+    @Test
+    public void should_returnForbidden_when_notGivenAccessToken() {
+        createAndTrackSystemWorkflow();
 
-    ClientResponse deleteResponse = client.send(HttpMethod.DELETE,
-				String.format(GET_SYSTEM_WORKFLOW_BY_ID_URL, INVALID_WORKFLOW_NAME), null, headers,
-				client.getAccessToken());
-
-		assertEquals(HttpStatus.SC_NOT_FOUND, deleteResponse.getStatus());
-	}
-
-	@Test
-	public void should_returnForbidden_when_notGivenAccessToken() throws Exception {
-    createAndTrackSystemWorkflow();
-
-    ClientResponse response = client.send(HttpMethod.DELETE,
-				String.format(GET_SYSTEM_WORKFLOW_BY_ID_URL, CREATE_WORKFLOW_WORKFLOW_NAME), null, headers, null);
-		assertTrue(
-				HttpStatus.SC_FORBIDDEN == response.getStatus() || HttpStatus.SC_UNAUTHORIZED == response.getStatus());
-	}
-
-  private void createAndTrackSystemWorkflow() throws Exception {
-    String responseBody = createSystemWorkflow();
-    trackWorkflow(responseBody);
-  }
+        ClientException ex = assertThrows(ClientException.class,
+                () -> unauthenticatedWorkflowClient.deleteSystemWorkflow(UserType.PRIVILEGED_USER, CREATE_WORKFLOW_WORKFLOW_NAME));
+        assertTrue(ex.getStatusCode() == HttpStatus.SC_FORBIDDEN || ex.getStatusCode() == HttpStatus.SC_UNAUTHORIZED,
+                "Expected 401/403, got: " + ex.getStatusCode());
+    }
 }

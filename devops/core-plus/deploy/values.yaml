@@ -12,6 +12,14 @@ data:
   schemaHost: "http://schema"
   legalHost: "http://legal"
   osduAirflowUrl: "http://airflow:8080"
+  # Airflow 3 engine toggle + side-by-side host (driven by the deployment flag,
+  # e.g. CIMPL_AIRFLOW3). airflowVersion3Enabled=true -> OSDU_AIRFLOW_VERSION=airflow3.
+  airflowVersion3Enabled: false
+  osduAirflow3Url: ""
+  # Airflow 3 api/v2 JWT token-exchange credentials are supplied via the workflow airflow
+  # secret (workflowAirflowSecretName), injected by the Deployment's envFrom secretRef exactly
+  # like the Airflow 2 credentials. The secret must include OSDU_AIRFLOW_AIRFLOW3_USERNAME and
+  # OSDU_AIRFLOW_AIRFLOW3_PASSWORD keys when Airflow 3 is enabled.
   sharedTenantName: ""
   composerClient: "IAAP"
   workflowHost: "http://workflow"

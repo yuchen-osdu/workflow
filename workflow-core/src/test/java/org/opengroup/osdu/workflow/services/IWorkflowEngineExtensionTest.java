@@ -18,7 +18,12 @@
 package org.opengroup.osdu.workflow.services;
 
 import static java.lang.String.format;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.opengroup.osdu.workflow.service.AirflowV2WorkflowEngineExtension.GET_RUN_TASKS_ERROR_MESSAGE;
 import static org.opengroup.osdu.workflow.service.AirflowV2WorkflowEngineExtension.GET_TASKS_XCOM_ERROR_MESSAGE;
@@ -36,6 +41,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import javax.ws.rs.HttpMethod;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,6 +64,20 @@ public class IWorkflowEngineExtensionTest {
   public static final String LAST_TASK_ID = "update_status_finished";
   public static final String SAVED_RECORDS_XCOM_KEY = "saved_record_ids";
   public static final String SKIPPED_RECORDS_XCOM_KEY = "skipped_ids";
+  /**
+   * Real-world XCom key from EDS Naturalization DAGs. Spaces / leading ':' break Jersey
+   * {@code Client.resource} / {@code URI.create} when left unencoded in the path (#475).
+   *
+   *   Not asserted (buggy — fails URI.create):
+   *
+   *   https://airflow.example/api/v1/dags/test_workflow/dagRuns/test_id/taskInstances/update_status_finished/xcomEntries/:10. EDS Naturalization DAG Run ID
+   *
+   *   Asserted (fixed — valid URI):
+   *
+   *   https://airflow.example/api/v1/dags/test_workflow/dagRuns/test_id/taskInstances/update_status_finished/xcomEntries/%3A10.%20EDS%20Naturalization%20DAG%20Run
+   *   %20ID
+   */
+  public static final String XCOM_KEY_WITH_RESERVED_CHARS = ":10. EDS Naturalization DAG Run ID";
   public static final String AIRFLOW_RESP_DIR = "airflow_responses/";
   public static final String AIRFLOW_RESPONSES_TASK_INSTANCES_JSON =
       AIRFLOW_RESP_DIR + "task-instances.json";
@@ -135,6 +157,65 @@ public class IWorkflowEngineExtensionTest {
     JsonNode expectedValue = objectMapper.readValue(expectedResponse.toString(), ObjectNode.class);
 
     assertEquals(expectedValue, lastDetails);
+  }
+
+  /**
+   * Reproduces #475: XCom value URLs must be legal for strict URI clients ({@code
+   * BasicAuthAirflowApiClient} → Jersey {@code Client.resource} → {@code URI.create}). Unencoded
+   * keys with spaces fail before the HTTP request is sent.
+   */
+  @Test
+  void getLatestTaskDetails_xcomKeyWithReservedChars_buildsUriSafeEndpoint()
+      throws JsonProcessingException {
+    String tasksEndpoint = format(TASK_INSTANCES, WORKFLOW_NAME, DAG_RUN_ID);
+    String xcomEntriesEndpoint = format(XCOM_ENTRIES, WORKFLOW_NAME, DAG_RUN_ID, LAST_TASK_ID);
+    String xcomKeysBody =
+        """
+        {
+          "total_entries": 1,
+          "xcom_entries": [
+            { "key": "%s", "task_id": "%s" }
+          ]
+        }
+        """
+            .formatted(XCOM_KEY_WITH_RESERVED_CHARS, LAST_TASK_ID);
+    String xcomValueBody =
+        """
+        {"key":"%s","value":"run-123"}
+        """
+            .formatted(XCOM_KEY_WITH_RESERVED_CHARS);
+
+    List<String> capturedEndpoints = new ArrayList<>();
+    doAnswer(
+            invocation -> {
+              String endpoint = invocation.getArgument(1);
+              capturedEndpoints.add(endpoint);
+              // Same constraint as BasicAuthAirflowApiClient / Jersey Client.resource(url).
+              URI.create("https://airflow.example/" + endpoint);
+
+              if (tasksEndpoint.equals(endpoint)) {
+                return ClientResponse.builder()
+                    .responseBody(readRespBodyFromFile(AIRFLOW_RESPONSES_TASK_INSTANCES_JSON))
+                    .build();
+              }
+              if (xcomEntriesEndpoint.equals(endpoint)) {
+                return ClientResponse.builder().responseBody(xcomKeysBody).build();
+              }
+              return ClientResponse.builder().responseBody(xcomValueBody).build();
+            })
+        .when(airflowApiClient)
+        .callAirflow(eq(HttpMethod.GET), anyString(), isNull(), isNull(), anyString());
+
+    assertDoesNotThrow(
+        () -> engineExtension.getLatestTaskDetails(WORKFLOW_NAME, DAG_RUN_ID),
+        "Airflow API path must be URI-safe when XCom keys contain spaces/reserved characters");
+
+    String xcomValueEndpoint =
+        capturedEndpoints.stream()
+            .filter(endpoint -> endpoint.contains("/xcomEntries/"))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("Expected an XCom value endpoint to be called"));
+    assertDoesNotThrow(() -> URI.create("https://airflow.example/" + xcomValueEndpoint));
   }
 
   private Object readRespBodyFromFile(String fileName) {
