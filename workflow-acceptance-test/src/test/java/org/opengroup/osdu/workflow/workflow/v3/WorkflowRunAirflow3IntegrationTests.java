@@ -22,8 +22,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.opengroup.osdu.workflow.consts.TestConstants.AIRFLOW3_EXPECTED_VERSION_PREFIX;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.Method;
 import org.opengroup.osdu.core.test.auth.UserType;
@@ -52,24 +54,34 @@ public final class WorkflowRunAirflow3IntegrationTests extends BaseWorkflowAccep
   // the Workflow Service is actually talking to.
   private static final String INTERNAL_AIRFLOW_SERVICE_NAME = "Internal Airflow";
 
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
   @TestAirflow3
   void serviceInfo_onAirflow3_reportsAirflow3EngineVersion() throws Exception {
     HttpResponse<String> response =
         send(UserType.PRIVILEGED_USER, ServiceType.WORKFLOW_V1, INFO_PATH, Method.GET);
     assertEquals(HttpStatus.SC_OK, response.statusCode(), response.toString());
 
-    JsonNode connectedOuterServices =
-        OBJECT_MAPPER.readTree(response.body()).get(CONNECTED_OUTER_SERVICES_FIELD);
+    JsonElement connectedOuterServicesElement =
+        JsonParser.parseString(response.body())
+            .getAsJsonObject()
+            .get(CONNECTED_OUTER_SERVICES_FIELD);
+    JsonArray connectedOuterServices =
+        connectedOuterServicesElement != null && connectedOuterServicesElement.isJsonArray()
+            ? connectedOuterServicesElement.getAsJsonArray()
+            : null;
     assertNotNull(
         connectedOuterServices,
         "connectedOuterServices must be present in the /info response");
 
     String internalAirflowVersion = null;
-    for (JsonNode service : connectedOuterServices) {
-      if (INTERNAL_AIRFLOW_SERVICE_NAME.equals(service.path(SERVICE_NAME_FIELD).asText())) {
-        internalAirflowVersion = service.path(SERVICE_VERSION_FIELD).asText();
+    for (JsonElement serviceElement : connectedOuterServices) {
+      JsonObject service = serviceElement.getAsJsonObject();
+      JsonElement name = service.get(SERVICE_NAME_FIELD);
+      if (name != null
+          && !name.isJsonNull()
+          && INTERNAL_AIRFLOW_SERVICE_NAME.equals(name.getAsString())) {
+        JsonElement version = service.get(SERVICE_VERSION_FIELD);
+        internalAirflowVersion =
+            version != null && !version.isJsonNull() ? version.getAsString() : "";
         break;
       }
     }
