@@ -18,6 +18,7 @@
 package org.opengroup.osdu.workflow.service.spi;
 
 import lombok.extern.slf4j.Slf4j;
+import org.opengroup.osdu.workflow.model.AirflowEngineVersions;
 import org.opengroup.osdu.workflow.provider.interfaces.IAirflowApiClient;
 import org.opengroup.osdu.workflow.provider.interfaces.IWorkflowEngineExtension;
 import org.opengroup.osdu.workflow.service.AirflowV2WorkflowEngineExtension;
@@ -28,12 +29,11 @@ import org.springframework.stereotype.Component;
 public class AirflowV2WorkflowEngineExtensionServiceProvider
     implements IWorkflowEngineExtensionServiceProvider {
 
-  private static final String V2 = "v2";
-
   @Override
   public boolean supports(String version) {
     log.debug("Checking support for version: {}", version);
-    return V2.equalsIgnoreCase(version);
+    return AirflowEngineVersions.V2.equalsIgnoreCase(version)
+        || AirflowEngineVersions.V2_LEGACY_ALIAS.equalsIgnoreCase(version);
   }
 
   @Override

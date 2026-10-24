@@ -8,6 +8,7 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.json.JSONException;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -30,6 +31,7 @@ import org.opengroup.osdu.workflow.provider.azure.config.AzureWorkflowEngineConf
 import org.opengroup.osdu.workflow.provider.azure.fileshare.FileShareConfig;
 import org.opengroup.osdu.workflow.provider.azure.fileshare.FileShareStore;
 import org.opengroup.osdu.workflow.provider.azure.interfaces.IActiveDagRunsCache;
+import org.opengroup.osdu.workflow.provider.azure.utils.airflow.AirflowEngineUtilSelector;
 import org.opengroup.osdu.workflow.provider.azure.utils.airflow.AirflowV1WorkflowEngineUtil;
 import org.skyscreamer.jsonassert.JSONAssert;
 
@@ -47,6 +49,7 @@ import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -170,7 +173,16 @@ public class WorkflowEngineServiceImplTest {
   private AirflowV1WorkflowEngineUtil engineUtil;
 
   @Mock
+  private AirflowEngineUtilSelector engineUtilSelector;
+
+  @Mock
   private ObjectMapper om;
+
+  @BeforeEach
+  void routeSelectorToEngineUtil() {
+    lenient().when(engineUtilSelector.utilFor(any())).thenReturn(engineUtil);
+    lenient().when(engineUtilSelector.getDefaultUtil()).thenReturn(engineUtil);
+  }
 
   @Test
   public void testCreateWorkflowWithDagContent() {
