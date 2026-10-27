@@ -32,8 +32,8 @@
   <properties>
     <core-lib-azure.version>3.0.0</core-lib-azure.version>
     <json.version>20240303</json.version>
-    <!-- Plugin Versions -->
-    <jacoco-plugin.version>0.8.12</jacoco-plugin.version>
+    <!-- Plugin Versions — keep aligned with parent Java 25 toolchain (JaCoCo ≥0.8.14) -->
+    <jacoco-plugin.version>${jacoco-maven-plugin.version}</jacoco-plugin.version>
   </properties>
 
   <dependencyManagement>
@@ -176,7 +176,7 @@
             <exclude>**/*org/opengroup/osdu/workflow/provider/azure/security/**</exclude>
           </excludes>
         </configuration>
-      <version>0.8.13</version>
+      <version>${jacoco-plugin.version}</version>
         <executions>
           <execution>
             <goals>

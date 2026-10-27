@@ -220,7 +220,7 @@ public class WorkflowManagerMvcTest {
   public void testGetApiWithSuccess() throws Exception {
     final WorkflowMetadata metadata = mapper.readValue(WORKFLOW_RESPONSE, WorkflowMetadata.class);
     when(workflowManagerService.getWorkflowByName(eq(WORKFLOW_NAME))).thenReturn(metadata);
-    when(authorizationService.authorizeAny(any(), any())).thenReturn(authorizationResponse);
+    when(authorizationService.authorizeAny(any(), any(String[].class))).thenReturn(authorizationResponse);
     when(dpsHeaders.getAuthorization()).thenReturn(TEST_AUTH);
     when(dpsHeaders.getPartitionId()).thenReturn(PARTITION);
     when(dpsHeaders.getCorrelationId()).thenReturn(CORRELATION_ID);
@@ -232,7 +232,7 @@ public class WorkflowManagerMvcTest {
         .andExpect(status().isOk())
         .andReturn();
     verify(workflowManagerService).getWorkflowByName(eq(WORKFLOW_NAME));
-    verify(authorizationService).authorizeAny(any(), any());
+    verify(authorizationService).authorizeAny(any(), any(String[].class));
     verify(dpsHeaders).getAuthorization();
     verify(dpsHeaders).getPartitionId();
     final WorkflowMetadata responseMetadata =
@@ -265,7 +265,7 @@ public class WorkflowManagerMvcTest {
   public void testDeleteApiWithError() throws Exception {
     doThrow(new WorkflowNotFoundException("not found")).when(workflowManagerService)
         .deleteWorkflow(eq(WORKFLOW_NAME));
-    when(authorizationService.authorizeAny(any(), any())).thenReturn(authorizationResponse);
+    when(authorizationService.authorizeAny(any(), any(String[].class))).thenReturn(authorizationResponse);
     when(dpsHeaders.getAuthorization()).thenReturn(TEST_AUTH);
     when(dpsHeaders.getPartitionId()).thenReturn(PARTITION);
     when(dpsHeaders.getCorrelationId()).thenReturn(CORRELATION_ID);
@@ -277,7 +277,7 @@ public class WorkflowManagerMvcTest {
         .andExpect(status().isNotFound())
         .andReturn();
     verify(workflowManagerService).deleteWorkflow(eq(WORKFLOW_NAME));
-    verify(authorizationService).authorizeAny(any(), any());
+    verify(authorizationService).authorizeAny(any(), any(String[].class));
     verify(dpsHeaders).getAuthorization();
     verify(dpsHeaders).getPartitionId();
   }
