@@ -1,5 +1,11 @@
 # OSDU Workflow Service
 
+## Prerequisites
+
+- [Maven 3.9.16+](https://maven.apache.org/download.cgi)
+- [JDK 25](https://adoptium.net/) — required for local builds. Enforcer `requireJavaVersion: [25,)` fails the Maven validate phase on JDK 17 by design ([Epic 82](https://community.opengroup.org/groups/osdu/platform/-/epics/82)).
+- [Lombok 1.18.40 or later](https://projectlombok.org/setup/maven)
+
 ## Contents
 
 * [Introduction](#introduction)
