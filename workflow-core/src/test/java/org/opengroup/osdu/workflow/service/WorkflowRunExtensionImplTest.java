@@ -157,7 +157,7 @@ class WorkflowRunExtensionImplTest {
 
   @Test
   void should_FallBackToDefaultEngine_when_RepositoryThrowsBareAppException404() {
-    // Some providers (e.g. IBM) surface a missing run as a bare AppException(404) rather than the
+    // Some providers surface a missing run as a bare AppException(404) rather than the
     // typed WorkflowRun/WorkflowNotFoundException. /latestInfo must still degrade to the default
     // engine instead of propagating the 404.
     Map<String, Object> instructions = new HashMap<>();

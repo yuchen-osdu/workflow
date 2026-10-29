@@ -402,7 +402,7 @@ in-flight Airflow 2 runs tracked on Airflow 2 while new runs go to Airflow 3.
 
 The `workflow-core` module provides the Airflow 3 building blocks for free: the AF3 `api/v2`
 client, JWT authentication, the per-run engine dispatcher, the engine-version model, and the
-SPI providers. Because each CSP with a custom provider (AWS, Azure, IBM) ships its own engine
+SPI providers. Because each CSP with a custom provider (AWS, Azure) ships its own engine
 service and persistence layer, that wiring is done per provider. Azure is the reference
 implementation. The steps are:
 
