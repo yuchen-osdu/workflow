@@ -14,8 +14,8 @@ designed to carry out preliminary work with files before running the Airflow Dir
 
 In order to run this service locally, you will need the following:
 
-- [Maven 3.6.0+](https://maven.apache.org/download.cgi)
-- [AdoptOpenJDK8](https://adoptopenjdk.net/)
+- [Maven 3.9.16+](https://maven.apache.org/download.cgi)
+- [JDK 25](https://adoptium.net/) — required for local builds. Enforcer `requireJavaVersion: [25,)` fails the Maven validate phase on JDK 17 by design ([Epic 82](https://community.opengroup.org/groups/osdu/platform/-/epics/82)).
 - Infrastructure dependencies, deployable through the relevant [infrastructure template](https://community.opengroup.org/osdu/platform/deployment-and-operations/infra-gc-provisioning)
 
 ## Service Configuration
@@ -46,9 +46,9 @@ Check that maven is installed:
 
 ```bash
 $ mvn --version
-Apache Maven 3.6.0
+Apache Maven 3.9.16
 Maven home: /usr/share/maven
-Java version: 1.8.0_212, vendor: AdoptOpenJDK, runtime: /usr/lib/jvm/jdk8u212-b04/jre
+Java version: 25.0.4, vendor: Eclipse Adoptium
 ...
 ```
 
