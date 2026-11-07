@@ -200,6 +200,7 @@ public class WorkflowRunRepository implements IWorkflowRunRepository {
         .startTimeStamp(workflowRun.getStartTimeStamp())
         .endTimeStamp(workflowRun.getEndTimeStamp())
         .status(workflowRun.getStatus().name())
+        .engineVersion(workflowRun.getEngineVersion())
         .submittedBy(workflowRun.getSubmittedBy()).build();
   }
 
@@ -212,6 +213,7 @@ public class WorkflowRunRepository implements IWorkflowRunRepository {
         .workflowEngineExecutionDate(workflowRunDoc.getWorkflowEngineExecutionDate())
         .startTimeStamp(workflowRunDoc.getStartTimeStamp())
         .endTimeStamp(workflowRunDoc.getEndTimeStamp())
+        .engineVersion(workflowRunDoc.getEngineVersion())
         .submittedBy(workflowRunDoc.getSubmittedBy())
         .build();
   }

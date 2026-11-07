@@ -133,7 +133,7 @@ class WorkflowRunMvcTest {
         .readValue(WORKFLOW_RUN_RESPONSE, WorkflowRunResponse.class);
     when(workflowRunService.triggerWorkflow(eq(WORKFLOW_NAME), eq(request)))
         .thenReturn(workflowRunResponse);
-    when(authorizationService.authorizeAny(any(), any())).thenReturn(authorizationResponse);
+    when(authorizationService.authorizeAny(any(), any(String[].class))).thenReturn(authorizationResponse);
     when(dpsHeaders.getAuthorization()).thenReturn(TEST_AUTH);
     when(dpsHeaders.getPartitionId()).thenReturn(PARTITION);
     when(dpsHeaders.getCorrelationId()).thenReturn(CORRELATION_ID);
@@ -146,7 +146,7 @@ class WorkflowRunMvcTest {
         .andExpect(status().isOk())
         .andReturn();
     verify(workflowRunService, times(1)).triggerWorkflow(eq(WORKFLOW_NAME), eq(request));
-    verify(authorizationService, times(1)).authorizeAny(any(), any());
+    verify(authorizationService, times(1)).authorizeAny(any(), any(String[].class));
     verify(dpsHeaders).getAuthorization();
     verify(dpsHeaders).getPartitionId();
     final WorkflowRunResponse response = mapper
@@ -160,7 +160,7 @@ class WorkflowRunMvcTest {
         .readValue(WORKFLOW_RUN_RESPONSE, WorkflowRunResponse.class);
     when(workflowRunService.getWorkflowRunByName(eq(WORKFLOW_NAME), eq(RUN_ID)))
         .thenReturn(workflowRunResponse);
-    when(authorizationService.authorizeAny(any(), any())).thenReturn(authorizationResponse);
+    when(authorizationService.authorizeAny(any(), any(String[].class))).thenReturn(authorizationResponse);
     when(dpsHeaders.getAuthorization()).thenReturn(TEST_AUTH);
     when(dpsHeaders.getPartitionId()).thenReturn(PARTITION);
     when(dpsHeaders.getCorrelationId()).thenReturn(CORRELATION_ID);
@@ -172,7 +172,7 @@ class WorkflowRunMvcTest {
         .andExpect(status().isOk())
         .andReturn();
     verify(workflowRunService).getWorkflowRunByName(eq(WORKFLOW_NAME), eq(RUN_ID));
-    verify(authorizationService).authorizeAny(any(), any());
+    verify(authorizationService).authorizeAny(any(), any(String[].class));
     verify(dpsHeaders).getAuthorization();
     verify(dpsHeaders).getPartitionId();
     final WorkflowRunResponse responseWorkflowRun =

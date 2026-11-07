@@ -89,7 +89,7 @@ public class GcpOsmCommonMetadataRepository implements ICommonMetadataRepository
           String.format("Workflow with name %s already exists.", workflowName));
     }
     return context.upsertAndGet(
-        workflowMetadata, getDestination(this.tenantInfo.getName(), isSystemWorkflow));
+        getDestination(this.tenantInfo.getName(), isSystemWorkflow), workflowMetadata);
   }
 
   @Override
@@ -155,7 +155,7 @@ public class GcpOsmCommonMetadataRepository implements ICommonMetadataRepository
   private Destination getDestination(String tenantName, boolean isSystemWorkflow) {
     if (isSystemWorkflow) {
       return getDestinationForSystemWorkflow(
-          tenantName,
+          workflowConfig.getSharedTenantName(),
           workflowConfig.getSystemWorkflowNamespace(),
           workflowConfig.getSystemWorkflowKind());
     } else {

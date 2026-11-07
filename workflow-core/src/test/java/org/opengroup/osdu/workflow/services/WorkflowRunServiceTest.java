@@ -39,8 +39,10 @@ import org.opengroup.osdu.workflow.model.TriggerWorkflowRequest;
 import org.opengroup.osdu.workflow.model.TriggerWorkflowResponse;
 import org.opengroup.osdu.workflow.model.UpdateWorkflowRunRequest;
 import org.opengroup.osdu.workflow.model.WorkflowEngineRequest;
+import org.opengroup.osdu.workflow.config.AirflowEngineVersionProvider;
 import org.opengroup.osdu.workflow.model.WorkflowMetadata;
 import org.opengroup.osdu.workflow.model.WorkflowRun;
+import org.opengroup.osdu.workflow.model.AirflowEngineVersions;
 import org.opengroup.osdu.workflow.model.WorkflowRunResponse;
 import org.opengroup.osdu.workflow.model.WorkflowRunsPage;
 import org.opengroup.osdu.workflow.model.WorkflowStatusType;
@@ -167,6 +169,9 @@ class WorkflowRunServiceTest {
   @Mock
   private IAirflowResolver airflowResolver;
 
+  @Mock
+  private AirflowEngineVersionProvider airflowEngineVersionProvider;
+
   @InjectMocks
   private WorkflowRunServiceImpl workflowRunService;
 
@@ -194,6 +199,8 @@ class WorkflowRunServiceTest {
         .thenReturn(responseWorkflowRun);
     when(airflowResolver.getWorkflowEngineService(workflowMetadata))
         .thenReturn(workflowEngineService);
+    when(airflowEngineVersionProvider.getConfiguredVersion())
+        .thenReturn(AirflowEngineVersions.V3);
 
     //when
     final WorkflowRunResponse returnedWorkflowRun = workflowRunService
@@ -210,6 +217,9 @@ class WorkflowRunServiceTest {
     assertThat(capturedWorkflowEngineRequest.getRunId(), equalTo(RUN_ID));
     assertThat(capturedWorkflowEngineRequest.getWorkflowId(), equalTo(WORKFLOW_NAME));
     assertThat(capturedWorkflowEngineRequest.isSystemWorkflow(), equalTo(false));
+    // The configured engine version is stamped on both the engine request and the persisted run so
+    // status/log/delete later route deterministically to the owning engine.
+    assertThat(capturedWorkflowEngineRequest.getEngineVersion(), equalTo(AirflowEngineVersions.V3));
     verify(workflowRunRepository).saveWorkflowRun(any(WorkflowRun.class));
 	  verify(dpsHeaders).getAuthorization();
     verify(dpsHeaders).getUserEmail();
@@ -222,6 +232,8 @@ class WorkflowRunServiceTest {
 	  assertThat(workflowRunArgumentCaptor.getValue().getWorkflowEngineExecutionDate(), equalTo(EXECUTION_DATE));
     assertThat(workflowRunArgumentCaptor.getValue().getStatus(),
         equalTo(WorkflowStatusType.SUBMITTED));
+    assertThat(workflowRunArgumentCaptor.getValue().getEngineVersion(),
+        equalTo(AirflowEngineVersions.V3));
   }
 
   @Test

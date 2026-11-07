@@ -66,9 +66,10 @@ public class GcpOsmWorkflowRunRepository implements IWorkflowRunRepository {
   @Override
   public WorkflowRun saveWorkflowRun(WorkflowRun workflowRun) {
     log.info("Saving workflow run. Workflow name : {}", workflowRun.getWorkflowName());
-    return context.upsertAndGet(workflowRun,
+    return context.upsertAndGet(
         this.destinationProvider.getDestination(this.tenantInfo,
-            workflowConfig.getWorkflowRunKind()));
+            workflowConfig.getWorkflowRunKind()),
+        workflowRun);
   }
 
   @Override
@@ -117,9 +118,10 @@ public class GcpOsmWorkflowRunRepository implements IWorkflowRunRepository {
 
   @Override
   public WorkflowRun updateWorkflowRun(WorkflowRun workflowRun) {
-    return context.upsertAndGet(workflowRun,
+    return context.upsertAndGet(
         this.destinationProvider.getDestination(this.tenantInfo,
-            workflowConfig.getWorkflowRunKind()));
+            workflowConfig.getWorkflowRunKind()),
+        workflowRun);
   }
 
   @Override
