@@ -1,6 +1,8 @@
 package org.opengroup.osdu.workflow.api;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.opengroup.osdu.workflow.config.ObjectMapperConfig;
+import org.opengroup.osdu.workflow.config.WebConfiguration;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -17,14 +19,13 @@ import org.opengroup.osdu.workflow.provider.interfaces.IAdminAuthorizationServic
 import org.opengroup.osdu.workflow.provider.interfaces.IWorkflowManagerService;
 import org.opengroup.osdu.workflow.security.AuthorizationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -56,7 +57,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(WorkflowSystemManagerApi.class)
 @AutoConfigureMockMvc
-@Import({AuthorizationFilter.class, DpsHeaders.class})
+@Import({AuthorizationFilter.class, DpsHeaders.class, WebConfiguration.class, ObjectMapperConfig.class})
 class WorkflowSystemManagerMvcTest {
   private static final String TEST_AUTH = "Bearer bla";
   private static final String CORRELATION_ID = "sample-correlation-id";
@@ -87,19 +88,19 @@ class WorkflowSystemManagerMvcTest {
   @Autowired
   private ObjectMapper mapper;
 
-  @MockBean
+  @MockitoBean
   private IWorkflowManagerService workflowManagerService;
 
-  @MockBean
+  @MockitoBean
   private IAuthorizationService authorizationService;
 
-  @MockBean
+  @MockitoBean
   private IAdminAuthorizationService adminAuthorizationService;
 
-  @MockBean
+  @MockitoBean
   private JaxRsDpsLog log;
 
-  @MockBean
+  @MockitoBean
   private DpsHeaders dpsHeaders;
 
   @Mock

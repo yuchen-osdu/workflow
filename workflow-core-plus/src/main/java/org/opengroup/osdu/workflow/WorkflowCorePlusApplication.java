@@ -18,10 +18,12 @@ package org.opengroup.osdu.workflow;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.PropertySource;
 
-@SpringBootApplication(scanBasePackages = "org.opengroup.osdu.workflow")
+@SpringBootApplication(scanBasePackages = "org.opengroup.osdu.workflow",
+    exclude = UserDetailsServiceAutoConfiguration.class)
 @ConfigurationPropertiesScan("org.opengroup.osdu.workflow.config")
 @PropertySource("classpath:swagger.properties")
 public class WorkflowCorePlusApplication {

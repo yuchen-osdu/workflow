@@ -24,8 +24,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import java.util.Map;
 import javax.ws.rs.HttpMethod;
 import org.json.JSONObject;
@@ -96,7 +96,7 @@ class AbstractAirflowWorkflowEngineServiceTest {
     String jsonDagRunStatus;
     try {
       jsonDagRunStatus = new ObjectMapper().writeValueAsString(dagRunStatus);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new RuntimeException(e);
     }
 

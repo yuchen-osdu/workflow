@@ -12,7 +12,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,7 @@ import org.opengroup.osdu.core.common.model.http.AppException;
 import org.opengroup.osdu.core.common.model.http.DpsHeaders;
 import org.opengroup.osdu.workflow.exception.ResourceConflictException;
 import org.opengroup.osdu.workflow.exception.WorkflowNotFoundException;
+import org.opengroup.osdu.workflow.config.AirflowEngineVersionProvider;
 import org.opengroup.osdu.workflow.logging.AuditLogger;
 import org.opengroup.osdu.workflow.model.CreateWorkflowRequest;
 import org.opengroup.osdu.workflow.model.WorkflowEngineRequest;
@@ -47,7 +50,8 @@ class WorkflowManagerServiceTest {
   private static final String USER_EMAIL = "user@email.com";
   private static final long SEED_VERSION = 1;
 
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
+      .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES).build();
 
   private static final String CREATE_WORKFLOW_REQUEST = "{\n" +
       "  \"workflowName\": \"HelloWorld\",\n" +
@@ -96,6 +100,9 @@ class WorkflowManagerServiceTest {
 
   @Mock
   private AuditLogger auditLogger;
+
+  @Mock
+  private AirflowEngineVersionProvider airflowEngineVersionProvider;
 
   @InjectMocks
   private WorkflowManagerServiceImpl workflowManagerService;
@@ -342,6 +349,29 @@ class WorkflowManagerServiceTest {
     verify(workflowRunService).deleteWorkflowRunsByWorkflowName(WORKFLOW_NAME);
     verify(workflowEngineService).deleteWorkflow(any());
     assertThat(workflowEngineRequestCaptor.getValue().getWorkflowName(), equalTo(WORKFLOW_NAME));
+  }
+
+  @Test
+  void testDeleteWorkflowRoutesByPersistedEngineOwner() throws Exception {
+    // A DAG created under airflow2 must be deleted from airflow2 even when the service is now
+    // configured for airflow3, so the delete is routed by the persisted engine owner, not the
+    // currently-configured engine (H3 — prevents orphaned cross-engine DAGs).
+    final WorkflowMetadata workflowMetadata = OBJECT_MAPPER.readValue(GET_WORKFLOW_RESPONSE,
+        WorkflowMetadata.class);
+    workflowMetadata.setEngineVersion("airflow2");
+    when(workflowMetadataRepository.getWorkflow(WORKFLOW_NAME)).thenReturn(workflowMetadata);
+    doNothing().when(workflowRunService).deleteWorkflowRunsByWorkflowName(WORKFLOW_NAME);
+    doNothing().when(workflowMetadataRepository).deleteWorkflow(WORKFLOW_NAME);
+    final ArgumentCaptor<WorkflowEngineRequest> workflowEngineRequestCaptor =
+        ArgumentCaptor.forClass(WorkflowEngineRequest.class);
+    when(airflowResolver.getWorkflowEngineService(workflowMetadata)).thenReturn(workflowEngineService);
+    doNothing().when(workflowEngineService).deleteWorkflow(workflowEngineRequestCaptor.capture());
+
+    workflowManagerService.deleteWorkflow(WORKFLOW_NAME);
+
+    assertThat(workflowEngineRequestCaptor.getValue().getEngineVersion(), equalTo("airflow2"));
+    // The currently-configured version must NOT be consulted for delete routing.
+    verify(airflowEngineVersionProvider, times(0)).getConfiguredVersion();
   }
 
   @Test

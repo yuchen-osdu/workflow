@@ -17,7 +17,6 @@
 
 package org.opengroup.osdu.workflow.osm.repository;
 
-import com.google.api.client.http.HttpStatusCodes;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -89,7 +88,7 @@ public class GcpOsmCommonMetadataRepository implements ICommonMetadataRepository
           String.format("Workflow with name %s already exists.", workflowName));
     }
     return context.upsertAndGet(
-        workflowMetadata, getDestination(this.tenantInfo.getName(), isSystemWorkflow));
+        getDestination(this.tenantInfo.getName(), isSystemWorkflow), workflowMetadata);
   }
 
   @Override
@@ -118,7 +117,7 @@ public class GcpOsmCommonMetadataRepository implements ICommonMetadataRepository
           eq(WORKFLOW_NAME, workflowName));
     } catch (TranslatorException ex) {
       throw new PersistenceException(
-          HttpStatusCodes.STATUS_CODE_SERVER_ERROR, "Internal server error", ex.getMessage());
+          HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error", ex.getMessage());
     }
   }
 
@@ -155,7 +154,7 @@ public class GcpOsmCommonMetadataRepository implements ICommonMetadataRepository
   private Destination getDestination(String tenantName, boolean isSystemWorkflow) {
     if (isSystemWorkflow) {
       return getDestinationForSystemWorkflow(
-          tenantName,
+          workflowConfig.getSharedTenantName(),
           workflowConfig.getSystemWorkflowNamespace(),
           workflowConfig.getSystemWorkflowKind());
     } else {

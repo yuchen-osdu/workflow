@@ -9,7 +9,7 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import com.google.api.client.util.Strings;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.opengroup.osdu.core.common.http.ResponseHeadersFactory;
 import org.opengroup.osdu.core.common.logging.JaxRsDpsLog;
@@ -97,7 +97,7 @@ public class ResponseHeaderFilter implements Filter {
 
   private void addFrameOfReferenceToDpsHeaders(HttpServletRequest httpRequest) {
     String FORHeader = httpRequest.getHeader(FOR_HEADER_NAME);
-    if (!Strings.isNullOrEmpty(FORHeader)) {
+    if (StringUtils.isNotEmpty(FORHeader)) {
       this.dpsHeaders.put(FOR_HEADER_NAME, FORHeader);
     }
   }

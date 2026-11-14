@@ -23,35 +23,59 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.5.16</version>
+    <version>4.0.9</version>
     <relativePath/>
   </parent>
 
   <groupId>org.opengroup.osdu</groupId>
   <artifactId>os-workflow</artifactId>
-  <version>0.30.0-SNAPSHOT</version>
+  <version>${revision}</version>
   <packaging>pom</packaging>
 
   <name>os-workflow</name>
   <description>Demo project for Spring Boot</description>
 
   <properties>
+    <revision>0.31.0-SNAPSHOT</revision>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <java.version>17</java.version>
+    <java.version>25</java.version>
+    <maven.compiler.release>${java.version}</maven.compiler.release>
     <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
-    <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
-    <os-core-common.version>7.1.3</os-core-common.version>
-    <openapi.version>2.8.16</openapi.version>
-    <swagger-core.version>2.2.45</swagger-core.version>
+    <os-core-common.version>10.0.0</os-core-common.version>
+    <openapi.version>3.0.3</openapi.version>
+    <swagger-core.version>2.2.47</swagger-core.version>
     <json-smart.version>2.6.0</json-smart.version>
-    <spring-framework.version>6.2.19</spring-framework.version>
-    <spring-boot.version>3.5.16</spring-boot.version>
-    <spring-security.version>6.5.11</spring-security.version>
-    <maven.compiler.release>17</maven.compiler.release>
-    <!-- os-core-common 7.0.0 declares lettuce-core as provided; CVE-2025-58057 requires >= 7.5.2.RELEASE -->
+    <!-- Spring Framework 7.0.9 fixes CVE-2026-47884 / CVE-2026-47890 (no 6.2.x fix) -->
+    <spring-framework.version>7.0.10</spring-framework.version>
+    <!-- spring-boot.version must match the parent version -->
+    <spring-boot.version>4.0.9</spring-boot.version>
+    <spring-security.version>7.0.7</spring-security.version>
+    <!-- Override Spring Boot 4.0.9's Tomcat 11.0.24 with the latest patched 11.0.x -->
+    <tomcat.version>11.0.27</tomcat.version>
+    <!-- os-core-common declares lettuce-core as provided; CVE-2025-58057 requires >= 7.5.2.RELEASE -->
     <lettuce.version>7.5.2.RELEASE</lettuce.version>
-    <!-- lettuce-core 7.x requires Netty 4.2+; Spring Boot 3.5.16 provides 4.1.x -->
-    <netty.version>4.2.16.Final</netty.version>
+    <!-- lettuce-core 7.x requires Netty 4.2+; 4.2.18.Final addresses High findings still present on 4.2.16/4.2.17 -->
+    <netty.version>4.2.19.Final</netty.version>
+    <!-- Patched Jackson 2 (third-party SDKs) and Jackson 3 (Spring Boot 4 default); these are the
+         spring-boot-dependencies property names, so they also override the parent-managed BOMs -->
+    <jackson-2-bom.version>2.21.8</jackson-2-bom.version>
+    <jackson-bom.version>3.1.8</jackson-bom.version>
+    <!-- Logback CVE-2026-104721 (SiftingAppender) fixed in 1.6.5; Spring Boot 4.0.9 still manages 1.5.x -->
+    <logback.version>1.6.5</logback.version>
+    <!-- Guava CVE-2026-102554 fixed in 33.7.2-jre -->
+    <guava.version>33.7.2-jre</guava.version>
+    <!-- Nested spring-boot-dependencies → mockito-bom ignores consumer mockito.version; pin explicitly.
+         Mockito 5.20+ pulls ByteBuddy with Java 25 support. -->
+    <mockito.version>5.23.0</mockito.version>
+    <!-- Plugin Versions -->
+    <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
+    <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
+    <maven-failsafe-plugin.version>3.5.4</maven-failsafe-plugin.version>
+    <maven-checkstyle-plugin.version>3.1.0</maven-checkstyle-plugin.version>
+    <maven-pmd-plugin.version>3.28.0</maven-pmd-plugin.version>
+    <spotbugs-maven-plugin.version>4.10.5.0</spotbugs-maven-plugin.version>
+    <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
+    <git-commit-id-maven-plugin.version>8.0.2</git-commit-id-maven-plugin.version>
   </properties>
 
   <licenses>
@@ -64,9 +88,9 @@
 
   <dependencyManagement>
     <!-- BOMs listed in import-order precedence (Maven's "first declared wins" rule for BOMs):
-      netty-bom first so it overrides Spring Boot's Netty 4.1.x with the 4.2.x line lettuce-core 7.5.2 requires (CVE-2025-58057 et al),
-      spring-boot-dependencies second as the parent BOM providing default dependency management
-      (Spring Boot 3.5.13+ already ships jackson-bom 2.21.2 natively),
+      netty-bom first so it overrides Spring Boot's Netty with the patched 4.2.x line lettuce-core 7.5.2 requires (CVE-2025-58057 et al),
+      the patched Jackson 2 and Jackson 3 BOMs next,
+      spring-boot-dependencies after them as the parent BOM providing default dependency management,
       spring-security-bom third as it may override Spring Framework versions for security,
       spring-framework-bom fourth as it provides core dependencies,
       os-core-common last as it provides OSDU-specific dependency defaults.
@@ -76,6 +100,22 @@
         <groupId>io.netty</groupId>
         <artifactId>netty-bom</artifactId>
         <version>${netty.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!-- Patched Jackson 2 / Jackson 3 BOMs before spring-boot-dependencies: the explicit import below
+           uses its own default Jackson versions and would otherwise win over the parent properties -->
+      <dependency>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>${jackson-2-bom.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>tools.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>${jackson-bom.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -131,17 +171,42 @@
       <dependency>
           <groupId>org.opengroup.osdu</groupId>
           <artifactId>workflow-core</artifactId>
-          <version>${parent.version}</version>
+          <version>${revision}</version>
       </dependency>
       <dependency>
           <groupId>org.jsoup</groupId>
           <artifactId>jsoup</artifactId>
-          <version>1.17.2</version>
+          <version>1.23.2</version>
+      </dependency>
+      <dependency>
+          <groupId>commons-io</groupId>
+          <artifactId>commons-io</artifactId>
+          <version>2.22.0</version>
+      </dependency>
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+        <version>${logback.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-core</artifactId>
+        <version>${logback.version}</version>
       </dependency>
       <dependency>
           <groupId>io.lettuce</groupId>
           <artifactId>lettuce-core</artifactId>
           <version>${lettuce.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>${mockito.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-junit-jupiter</artifactId>
+        <version>${mockito.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -270,31 +335,16 @@
       <version>4.13.2</version>
       <scope>test</scope>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/org.powermock/powermock-api-mockito2 -->
-    <dependency>
-      <groupId>org.powermock</groupId>
-      <artifactId>powermock-api-mockito2</artifactId>
-      <version>2.0.2</version>
-      <scope>test</scope>
-    </dependency>
-    <!-- https://mvnrepository.com/artifact/org.powermock/powermock-module-junit4 -->
-    <dependency>
-      <groupId>org.powermock</groupId>
-      <artifactId>powermock-module-junit4</artifactId>
-      <version>2.0.2</version>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>3.4.0</version>
       <scope>test</scope>
     </dependency>
     <!--    WhiteSource -->
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>32.1.1-jre</version>
+      <version>${guava.version}</version>
     </dependency>
     <dependency>
       <groupId>org.yaml</groupId>
@@ -317,12 +367,19 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
+          <version>${maven-surefire-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>${maven-failsafe-plugin.version}</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
+          <version>${maven-compiler-plugin.version}</version>
           <configuration>
-            <release>17</release>
+            <release>${maven.compiler.release}</release>
             <annotationProcessorPaths>
               <path>
                 <groupId>org.springframework.boot</groupId>
@@ -364,7 +421,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>${maven-checkstyle-plugin.version}</version>
         <configuration>
           <configLocation>google_checks.xml</configLocation>
         </configuration>
@@ -380,7 +437,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-pmd-plugin</artifactId>
-        <version>3.21.0</version>
+        <version>${maven-pmd-plugin.version}</version>
         <configuration>
           <targetJdk>${java.version}</targetJdk>
           <excludes>
@@ -403,21 +460,20 @@
       <plugin>
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-maven-plugin</artifactId>
-        <version>4.7.3.6</version>
+        <version>${spotbugs-maven-plugin.version}</version>
         <executions>
           <execution>
             <goals>
               <goal>spotbugs</goal>
             </goals>
             <phase>verify</phase>
-
           </execution>
         </executions>
       </plugin>
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.13</version>
+        <version>${jacoco-maven-plugin.version}</version>
         <executions>
           <execution>
             <goals>
@@ -436,7 +492,7 @@
       <plugin>
         <groupId>io.github.git-commit-id</groupId>
         <artifactId>git-commit-id-maven-plugin</artifactId>
-        <version>8.0.2</version>
+        <version>${git-commit-id-maven-plugin.version}</version>
         <executions>
           <execution>
             <goals>
@@ -461,18 +517,31 @@
           <dependency>
             <groupId>org.opengroup.osdu</groupId>
             <artifactId>osdu-enforcer-rules</artifactId>
-            <version>1.0.1</version>
+            <version>2.0.3</version>
           </dependency>
         </dependencies>
         <executions>
           <execution>
-            <id>enforce</id>
-            <phase>verify</phase>
+            <id>enforce-config-hygiene</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
             <configuration>
               <rules>
-                <enforceTestExecution/>
+                <requireMavenVersion>
+                  <version>[3.6.3,)</version>
+                </requireMavenVersion>
+                <requireJavaVersion>
+                  <version>[25,)</version>
+                </requireJavaVersion>
                 <banDuplicatePomDependencyVersions/>
                 <reactorModuleConvergence/>
+                <requireSameVersions>
+                  <plugins>
+                    <plugin>org.apache.maven.plugins:maven-compiler-plugin</plugin>
+                  </plugins>
+                </requireSameVersions>
                 <requireSameVersions>
                   <plugins>
                     <plugin>org.apache.maven.plugins:maven-surefire-plugin</plugin>
@@ -490,8 +559,42 @@
                 </requireReleaseDeps>
               </rules>
             </configuration>
+          </execution>
+          <execution>
+            <id>enforce-test-execution</id>
+            <phase>verify</phase>
             <goals>
               <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <enforceTestExecution/>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>flatten-maven-plugin</artifactId>
+        <version>1.8.0</version>
+        <configuration>
+          <updatePomFile>true</updatePomFile>
+          <flattenMode>resolveCiFriendliesOnly</flattenMode>
+        </configuration>
+        <executions>
+          <execution>
+            <id>flatten</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>flatten</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>flatten.clean</id>
+            <phase>clean</phase>
+            <goals>
+              <goal>clean</goal>
             </goals>
           </execution>
         </executions>
@@ -552,30 +655,6 @@
       <modules>
         <module>workflow-core</module>
         <module>workflow-core-plus</module>
-      </modules>
-    </profile>
-    <profile>
-      <id>aws</id>
-      <modules>
-        <module>provider/workflow-aws</module>
-      </modules>
-    </profile>
-    <profile>
-      <id>azure</id>
-      <modules>
-        <module>provider/workflow-azure</module>
-      </modules>
-    </profile>
-    <profile>
-      <id>ibm</id>
-      <modules>
-        <module>provider/workflow-ibm</module>
-      </modules>
-    </profile>
-    <profile>
-      <id>gc</id>
-      <modules>
-        <module>provider/workflow-gc</module>
       </modules>
     </profile>
   </profiles>

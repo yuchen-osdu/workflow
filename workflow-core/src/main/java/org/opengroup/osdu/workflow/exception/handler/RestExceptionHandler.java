@@ -16,9 +16,9 @@
 
 package org.opengroup.osdu.workflow.exception.handler;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.exc.MismatchedInputException;
+import tools.jackson.core.exc.StreamReadException;
+import tools.jackson.databind.DatabindException;
+import tools.jackson.databind.exc.MismatchedInputException;
 import java.util.ArrayList;
 import java.util.List;
 import jakarta.validation.ConstraintViolation;
@@ -45,7 +45,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
   final JaxRsDpsLog log;
 
-  @ExceptionHandler({JsonMappingException.class, JsonParseException.class, IllegalStateException.class,
+  @ExceptionHandler({DatabindException.class, StreamReadException.class, IllegalStateException.class,
       MismatchedInputException.class, IntegrationException.class })
   protected ResponseEntity<Object> handleInvalidBody(RuntimeException ex,
       WebRequest request) {

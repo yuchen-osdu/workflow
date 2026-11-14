@@ -19,9 +19,10 @@ package org.opengroup.osdu.workflow.service;
 
 import static java.lang.String.format;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -126,11 +127,12 @@ public abstract class AbstractAirflowWorkflowEngineService implements IWorkflowE
 
   protected AirflowGetDAGRunStatus getAirflowGetDAGRunStatus(ClientResponse response) {
     try {
-      ObjectMapper objectMapper = new ObjectMapper();
-      objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+      ObjectMapper objectMapper = JsonMapper.builder()
+          .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+          .build();
       return objectMapper.readValue(
           response.getResponseBody().toString(), AirflowGetDAGRunStatus.class);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       final String errorMessage = format("Unable to Process Json Received. %s", e.getMessage());
       log.error(errorMessage, e);
       throw new AppException(
