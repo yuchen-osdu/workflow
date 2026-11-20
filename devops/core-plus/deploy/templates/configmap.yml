@@ -10,5 +10,16 @@ data:
   PARTITION_HOST: {{ .Values.data.partitionHost | quote }}
   ENTITLEMENTS_HOST: {{ .Values.data.entitlementsHost | quote }}
   OSDU_AIRFLOW_URL: {{ .Values.data.osduAirflowUrl | quote }}
+  # Airflow engine selection. airflowVersion3Enabled (bool) is the single toggle
+  # driven by the deployment flag (e.g. CIMPL_AIRFLOW3): true -> airflow3, else airflow2.
+  OSDU_AIRFLOW_VERSION: {{ ternary "airflow3" "airflow2" (eq (.Values.data.airflowVersion3Enabled | toString) "true") | quote }}
+  {{- if .Values.data.osduAirflow3Url }}
+  # Side-by-side Airflow 3 host. When set, in-flight Airflow 2 runs keep resolving
+  # on OSDU_AIRFLOW_URL while new (airflow3) runs go here. The api/v2 JWT token-exchange
+  # credentials (OSDU_AIRFLOW_AIRFLOW3_USERNAME / OSDU_AIRFLOW_AIRFLOW3_PASSWORD) are provided
+  # by the workflow airflow secret (envFrom secretRef in the Deployment), same as the Airflow 2
+  # credentials — not rendered here, to keep secrets out of the ConfigMap.
+  OSDU_AIRFLOW_AIRFLOW3_URL: {{ .Values.data.osduAirflow3Url | quote }}
+  {{- end }}
   SPRING_PROFILES_ACTIVE: "anthos"
   SHARED_TENANT_NAME: {{ .Values.global.dataPartitionId | quote }}

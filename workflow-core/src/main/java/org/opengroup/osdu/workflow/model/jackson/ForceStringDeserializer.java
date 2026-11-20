@@ -16,22 +16,22 @@
 
 package org.opengroup.osdu.workflow.model.jackson;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import java.io.IOException;
-import org.springframework.boot.jackson.JsonComponent;
+import org.springframework.boot.jackson.JacksonComponent;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
 
-@JsonComponent
-public class ForceStringDeserializer extends JsonDeserializer<String> {
+@JacksonComponent
+public class ForceStringDeserializer extends ValueDeserializer<String> {
 
   @Override
-  public String deserialize(JsonParser parser,
-      DeserializationContext ctxt) throws IOException {
-    if (parser.getCurrentToken() == JsonToken.VALUE_NUMBER_INT) {
-      throw ctxt.wrongTokenException(parser, this.handledType(), JsonToken.VALUE_STRING,
-          "Attempted to parse int to string but this is forbidden");
+  public String deserialize(JsonParser parser, DeserializationContext ctxt) {
+    if (parser.currentToken() == JsonToken.VALUE_NUMBER_INT) {
+      // Same message as the Jackson 2 wrongTokenException, which Jackson 3 formats differently
+      return ctxt.reportInputMismatch(String.class,
+          "Unexpected token (VALUE_NUMBER_INT), expected VALUE_STRING: "
+              + "Attempted to parse int to string but this is forbidden");
     }
     return parser.getValueAsString();
   }

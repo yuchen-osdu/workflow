@@ -17,9 +17,9 @@
 
 package org.opengroup.osdu.workflow.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -72,7 +72,7 @@ public class SecretBasedExternalAirflowConfigServiceImpl implements IExternalAir
     try {
       Map<String, Object> configMap = objectMapper.readValue(secretValue, new TypeReference<>() {});
       externalAirflowConfig.setConfigMap(configMap);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       log.error("Error parsing secret for external airflow config: {}", externalAirflowSecretId, e);
       throw new AppException(
           HttpStatus.SC_BAD_REQUEST,
