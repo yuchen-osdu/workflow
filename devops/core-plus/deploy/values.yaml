@@ -1,6 +1,7 @@
 global:
   domain: ""
-  useHttps: true
+  # Host the HTTPRoute attaches to when httpRoute.hostnames is empty.
+  hostname: ""
   limitsEnabled: true
   dataPartitionId: ""
 
@@ -12,8 +13,15 @@ data:
   schemaHost: "http://schema"
   legalHost: "http://legal"
   osduAirflowUrl: "http://airflow:8080"
+  # Airflow 3 engine toggle + side-by-side host (driven by the deployment flag,
+  # e.g. CIMPL_AIRFLOW3). airflowVersion3Enabled=true -> OSDU_AIRFLOW_VERSION=airflow3.
+  airflowVersion3Enabled: false
+  osduAirflow3Url: ""
+  # Airflow 3 api/v2 JWT token-exchange credentials are supplied via the workflow airflow
+  # secret (workflowAirflowSecretName), injected by the Deployment's envFrom secretRef exactly
+  # like the Airflow 2 credentials. The secret must include OSDU_AIRFLOW_AIRFLOW3_USERNAME and
+  # OSDU_AIRFLOW_AIRFLOW3_PASSWORD keys when Airflow 3 is enabled.
   sharedTenantName: ""
-  composerClient: "IAAP"
   workflowHost: "http://workflow"
   dagNames:
     - csv_ingestion
@@ -42,6 +50,21 @@ conf:
   rabbitmqSecretName: "rabbitmq-secret"
   bootstrapSecretName: "datafier-secret"
   replicas: 1
+
+httpRoute:
+  enabled: false
+  # Route name. Defaults to "<release>-route" so it never collides with a route of the same name
+  # defined outside this chart.
+  name: ""
+  parentRefs:
+    - name: cimpl-gateway
+      namespace: istio-system
+  # Defaults to global.hostname when empty. The render fails when both are empty.
+  hostnames: []
+  # One rule per entry. Optional per entry: pathType (default PathPrefix), serviceName
+  # (default conf.appName), port (default 80) and filters (for example URLRewrite).
+  routes:
+    - path: /api/workflow/
 
 istio:
   proxyCPU: "5m"

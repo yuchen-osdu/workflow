@@ -17,6 +17,8 @@
 
 package org.opengroup.osdu.workflow.api;
 
+import org.opengroup.osdu.workflow.config.ObjectMapperConfig;
+import org.opengroup.osdu.workflow.config.WebConfiguration;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.ArgumentMatchers.any;
@@ -31,8 +33,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import java.util.List;
 import org.junit.Before;
 import org.junit.jupiter.api.Assertions;
@@ -54,10 +56,10 @@ import org.opengroup.osdu.workflow.provider.interfaces.IAdminAuthorizationServic
 import org.opengroup.osdu.workflow.provider.interfaces.IWorkflowManagerService;
 import org.opengroup.osdu.workflow.security.AuthorizationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
@@ -83,7 +85,7 @@ import org.springframework.web.context.WebApplicationContext;
 @WebMvcTest(WorkflowManagerApi.class)
 @AutoConfigureMockMvc
 @ExtendWith(SpringExtension.class)
-@Import({AuthorizationFilter.class, DpsHeaders.class})
+@Import({AuthorizationFilter.class, DpsHeaders.class, WebConfiguration.class, ObjectMapperConfig.class})
 public class WorkflowManagerMvcTest {
   private static final String TEST_AUTH = "Bearer bla";
   private static final String PARTITION = "partition";
@@ -126,24 +128,24 @@ public class WorkflowManagerMvcTest {
   @Autowired
   private MockMvc mockMvc;
 
-  private ObjectMapper mapper = new ObjectMapper();
+  private ObjectMapper mapper = new ObjectMapperConfig().objectMapper();
 
-  @MockBean
+  @MockitoBean
   private IWorkflowManagerService workflowManagerService;
 
-  @MockBean
+  @MockitoBean
   private IAuthorizationService authorizationService;
 
-  @MockBean
+  @MockitoBean
   private IAdminAuthorizationService adminAuthorizationService;
 
-  @MockBean
+  @MockitoBean
   private JaxRsDpsLog log;
 
-  @MockBean
+  @MockitoBean
   private DpsHeaders dpsHeaders;
 
-  @MockBean
+  @MockitoBean
   private AuthorizationResponse authorizationResponse;
 
   @InjectMocks
@@ -220,7 +222,7 @@ public class WorkflowManagerMvcTest {
   public void testGetApiWithSuccess() throws Exception {
     final WorkflowMetadata metadata = mapper.readValue(WORKFLOW_RESPONSE, WorkflowMetadata.class);
     when(workflowManagerService.getWorkflowByName(eq(WORKFLOW_NAME))).thenReturn(metadata);
-    when(authorizationService.authorizeAny(any(), any())).thenReturn(authorizationResponse);
+    when(authorizationService.authorizeAny(any(), any(String[].class))).thenReturn(authorizationResponse);
     when(dpsHeaders.getAuthorization()).thenReturn(TEST_AUTH);
     when(dpsHeaders.getPartitionId()).thenReturn(PARTITION);
     when(dpsHeaders.getCorrelationId()).thenReturn(CORRELATION_ID);
@@ -232,7 +234,7 @@ public class WorkflowManagerMvcTest {
         .andExpect(status().isOk())
         .andReturn();
     verify(workflowManagerService).getWorkflowByName(eq(WORKFLOW_NAME));
-    verify(authorizationService).authorizeAny(any(), any());
+    verify(authorizationService).authorizeAny(any(), any(String[].class));
     verify(dpsHeaders).getAuthorization();
     verify(dpsHeaders).getPartitionId();
     final WorkflowMetadata responseMetadata =
@@ -265,7 +267,7 @@ public class WorkflowManagerMvcTest {
   public void testDeleteApiWithError() throws Exception {
     doThrow(new WorkflowNotFoundException("not found")).when(workflowManagerService)
         .deleteWorkflow(eq(WORKFLOW_NAME));
-    when(authorizationService.authorizeAny(any(), any())).thenReturn(authorizationResponse);
+    when(authorizationService.authorizeAny(any(), any(String[].class))).thenReturn(authorizationResponse);
     when(dpsHeaders.getAuthorization()).thenReturn(TEST_AUTH);
     when(dpsHeaders.getPartitionId()).thenReturn(PARTITION);
     when(dpsHeaders.getCorrelationId()).thenReturn(CORRELATION_ID);
@@ -277,7 +279,7 @@ public class WorkflowManagerMvcTest {
         .andExpect(status().isNotFound())
         .andReturn();
     verify(workflowManagerService).deleteWorkflow(eq(WORKFLOW_NAME));
-    verify(authorizationService).authorizeAny(any(), any());
+    verify(authorizationService).authorizeAny(any(), any(String[].class));
     verify(dpsHeaders).getAuthorization();
     verify(dpsHeaders).getPartitionId();
   }

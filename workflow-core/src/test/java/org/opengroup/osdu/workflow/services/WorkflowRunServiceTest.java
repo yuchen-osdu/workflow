@@ -13,7 +13,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -39,8 +41,10 @@ import org.opengroup.osdu.workflow.model.TriggerWorkflowRequest;
 import org.opengroup.osdu.workflow.model.TriggerWorkflowResponse;
 import org.opengroup.osdu.workflow.model.UpdateWorkflowRunRequest;
 import org.opengroup.osdu.workflow.model.WorkflowEngineRequest;
+import org.opengroup.osdu.workflow.config.AirflowEngineVersionProvider;
 import org.opengroup.osdu.workflow.model.WorkflowMetadata;
 import org.opengroup.osdu.workflow.model.WorkflowRun;
+import org.opengroup.osdu.workflow.model.AirflowEngineVersions;
 import org.opengroup.osdu.workflow.model.WorkflowRunResponse;
 import org.opengroup.osdu.workflow.model.WorkflowRunsPage;
 import org.opengroup.osdu.workflow.model.WorkflowStatusType;
@@ -70,7 +74,8 @@ class WorkflowRunServiceTest {
   private static final String USER_EMAIL = "user@email.com";
   private static final String TEST_CURSOR = "test-cursor";
   private static final String EXECUTION_DATE = "2021-01-05T11:36:45+00:00";
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
+      .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES).build();
   private static final String USER_ID = "dummy-user-id";
   private static final String WORKFLOW_METADATA = "{\n" +
       "  \"workflowId\": \"some-dag-name\",\n" +
@@ -167,6 +172,9 @@ class WorkflowRunServiceTest {
   @Mock
   private IAirflowResolver airflowResolver;
 
+  @Mock
+  private AirflowEngineVersionProvider airflowEngineVersionProvider;
+
   @InjectMocks
   private WorkflowRunServiceImpl workflowRunService;
 
@@ -194,6 +202,8 @@ class WorkflowRunServiceTest {
         .thenReturn(responseWorkflowRun);
     when(airflowResolver.getWorkflowEngineService(workflowMetadata))
         .thenReturn(workflowEngineService);
+    when(airflowEngineVersionProvider.getConfiguredVersion())
+        .thenReturn(AirflowEngineVersions.V3);
 
     //when
     final WorkflowRunResponse returnedWorkflowRun = workflowRunService
@@ -210,6 +220,9 @@ class WorkflowRunServiceTest {
     assertThat(capturedWorkflowEngineRequest.getRunId(), equalTo(RUN_ID));
     assertThat(capturedWorkflowEngineRequest.getWorkflowId(), equalTo(WORKFLOW_NAME));
     assertThat(capturedWorkflowEngineRequest.isSystemWorkflow(), equalTo(false));
+    // The configured engine version is stamped on both the engine request and the persisted run so
+    // status/log/delete later route deterministically to the owning engine.
+    assertThat(capturedWorkflowEngineRequest.getEngineVersion(), equalTo(AirflowEngineVersions.V3));
     verify(workflowRunRepository).saveWorkflowRun(any(WorkflowRun.class));
 	  verify(dpsHeaders).getAuthorization();
     verify(dpsHeaders).getUserEmail();
@@ -222,6 +235,8 @@ class WorkflowRunServiceTest {
 	  assertThat(workflowRunArgumentCaptor.getValue().getWorkflowEngineExecutionDate(), equalTo(EXECUTION_DATE));
     assertThat(workflowRunArgumentCaptor.getValue().getStatus(),
         equalTo(WorkflowStatusType.SUBMITTED));
+    assertThat(workflowRunArgumentCaptor.getValue().getEngineVersion(),
+        equalTo(AirflowEngineVersions.V3));
   }
 
   @Test
